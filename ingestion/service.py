@@ -63,7 +63,6 @@ def run(service):
         # necessary attributes, get out.
         raise click.BadOptionUsage(
             'service', '{} is not a valid service. No process.'.format(service))
-    print('SETTINGS', dir(settings))
     app = Application(
         host=settings.KAFKA_BROKER_HOST,
         port=settings.KAFKA_BROKER_PORT,
