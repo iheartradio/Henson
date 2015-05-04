@@ -1,12 +1,11 @@
 """Implementation of the service."""
 
-from importlib import import_module
 import sys
 
 import click
 
 from ingestion.kafka import connect, ConnectionInfo, Consumer
-
+from ingestion.importer import import_from_service, ServiceImportError
 
 
 class Application:
@@ -48,19 +47,13 @@ class Application:
 def run(service):
     """Run an ingestion service."""
     try:
-        settings = import_module('{}.settings'.format(service))
-    except ImportError:
-        # If the service can't be imported or it doesn't contain the
-        # necessary attributes, get out.
-        raise click.BadOptionUsage(
-            'service', '{} is not a valid service. No settings.'.format(service))
+        settings = import_from_service(service, 'settings')
+    except ServiceImportError as e:
+        raise click.BadOptionUsage('service', str(e))
     try:
-        process = import_module('{}.process'.format(service))
-    except ImportError:
-        # If the service can't be imported or it doesn't contain the
-        # necessary attributes, get out.
-        raise click.BadOptionUsage(
-            'service', '{} is not a valid service. No process.'.format(service))
+        process = import_from_service(service, 'process')
+    except ServiceImportError as e:
+        raise click.BadOptionUsage('service', str(e))
     app = Application(
         host=settings.KAFKA_BROKER_HOST,
         port=settings.KAFKA_BROKER_PORT,
