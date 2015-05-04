@@ -10,20 +10,45 @@ from ingestion.importer import import_from_service, ServiceImportError
 
 class Application:
 
-    """This is a class."""
+    """A service application.
 
-    _consumer = None
+    A service application will spin up its own Kafka consumer and pass
+    each incoming message to a callback.
+    """
 
-    def __init__(self, *, host, port, topic, callback, group=None):
-        """Initialize the class."""
-        self.info = ConnectionInfo(host, port, topic, group)
+    def __init__(self, name, settings, *, callback):
+        """Initialize the class.
+
+        Args:
+            name (str): The name of the application.
+            settings (object): An object with attributed-based settings.
+            callback (callable): A callable object that takes two
+              arguments, an instance of this class and a dict
+              representing an incoming message.
+        """
+        self.name = name
+        self.settings = settings
         self.callback = callback
 
+        # KafkaClient connections are eager. Don't instantiate an
+        # instance until we're ready to use it.
+        self._consumer = None
+        self._consumer_info = ConnectionInfo(
+            settings.KAFKA_BROKER_HOST,
+            settings.KAFKA_BROKER_PORT,
+            settings.KAFKA_TOPIC_INBOUND,
+            settings.KAFKA_GROUP_NAME,
+        )
+
     def _initialize(self):
-        client = connect(host=self.info.host, port=self.info.port)
+        client = connect(
+            host=self._consumer_info.host, port=self._consumer_info.port)
 
         self._consumer = Consumer(
-            client=client, topic=self.info.topic, group=self.info.group)
+            client=client,
+            topic=self._consumer_info.topic,
+            group=self._consumer_info.group,
+        )
 
     def run_forever(self):
         """Run the class."""
@@ -39,7 +64,7 @@ class Application:
             except Exception:
                 continue
 
-            self.callback(message)
+            self.callback(self, message)
 
 
 @click.command(context_settings={'help_option_names': ['-h', '--help']})
@@ -55,10 +80,8 @@ def run(service):
     except ServiceImportError as e:
         raise click.BadOptionUsage('service', str(e))
     app = Application(
-        host=settings.KAFKA_BROKER_HOST,
-        port=settings.KAFKA_BROKER_PORT,
-        topic=settings.KAFKA_TOPIC_INBOUND,
-        group=settings.KAFKA_GROUP_NAME,
+        name=service,
+        settings=settings,
         callback=process.run,
     )
     app.run_forever()
