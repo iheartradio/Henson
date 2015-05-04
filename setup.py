@@ -7,7 +7,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     install_requires=[
         'click==4.0',
-        'ingestion.kafka',
+        'ingestion.kafka>=0.0.2',
         'setuptools',
     ],
     tests_require=[
