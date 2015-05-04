@@ -1,14 +1,12 @@
 """Implementation of the service."""
 
-from collections import namedtuple
 from importlib import import_module
 import sys
 
 import click
 
-from ingestion.kafka import connect, Consumer
+from ingestion.kafka import connect, ConnectionInfo, Consumer
 
-KafkaInfo = namedtuple('KafkaInfo', ('host', 'port', 'topic', 'group'))
 
 
 class Application:
@@ -19,7 +17,7 @@ class Application:
 
     def __init__(self, *, host, port, topic, callback, group=None):
         """Initialize the class."""
-        self.info = KafkaInfo(host, port, topic, group)
+        self.info = ConnectionInfo(host, port, topic, group)
         self.callback = callback
 
     def _initialize(self):
