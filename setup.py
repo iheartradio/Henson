@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='ingestion.service',
-    version='0.2.0',
+    version='0.3.0',
     namespace_packages=['ingestion'],
     packages=find_packages(exclude=['tests']),
     install_requires=[
