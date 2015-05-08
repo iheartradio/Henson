@@ -4,7 +4,7 @@ import sys
 
 import click
 
-from ingestion.kafka import connect, ConnectionInfo, Consumer
+from ingestion.kafka import Kafka
 from ingestion.importer import import_from_service, ServiceImportError
 
 
@@ -26,35 +26,19 @@ class Application:
     def __init__(self, name, settings, *, callback):
         """Initialize the class."""
         self.name = name
-        self.settings = settings
+        self.settings = dict()
+        self.settings.update(object_to_settings(settings))
         self.callback = callback
 
-        # KafkaClient connections are eager. Don't instantiate an
-        # instance until we're ready to use it.
-        self._consumer = None
-        self._consumer_info = ConnectionInfo(
-            settings.KAFKA_BROKER_HOST,
-            settings.KAFKA_BROKER_PORT,
-            settings.KAFKA_TOPIC_INBOUND,
-            settings.KAFKA_GROUP_NAME,
-        )
+        self.kafka = Kafka(self)
 
-    def _initialize(self):
-        client = connect(
-            host=self._consumer_info.host, port=self._consumer_info.port)
-
-        self._consumer = Consumer(
-            client=client,
-            topic=self._consumer_info.topic,
-            group=self._consumer_info.group,
-        )
+        registry.current_application = self
 
     def run_forever(self):
         """Run the class."""
-        if not self._consumer:
-            self._initialize()
+        consumer = self.kafka.consumer()
 
-        messages = self._consumer.read()
+        messages = consumer.read()
         while True:
             try:
                 message = next(messages)
@@ -64,6 +48,24 @@ class Application:
                 continue
 
             self.callback(self, message)
+
+
+def object_to_settings(obj):
+    """Convert an object into a structure usable for settings.
+
+    Uppercase attributes of the specified object will be included in a
+    new mapping that can be used to update existing settings.
+
+    Args:
+        obj: An object encapsulating settings. This will typically be a
+          module or class.
+
+    Returns:
+        dict: A mapping of the settings taken from the object.
+
+    .. versionadded:: 0.3.0
+    """
+    return {key: getattr(obj, key) for key in dir(obj) if key.isupper()}
 
 
 @click.command(context_settings={'help_option_names': ['-h', '--help']})
