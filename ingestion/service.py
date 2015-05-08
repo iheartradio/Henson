@@ -14,18 +14,17 @@ class Application:
 
     A service application will spin up its own Kafka consumer and pass
     each incoming message to a callback.
+
+    Args:
+        name (str): The name of the application.
+        settings (object): An object with attributed-based settings.
+        callback (callable): A callable object that takes two
+          arguments, an instance of this class and a dict representing
+          an incoming message.
     """
 
     def __init__(self, name, settings, *, callback):
-        """Initialize the class.
-
-        Args:
-            name (str): The name of the application.
-            settings (object): An object with attributed-based settings.
-            callback (callable): A callable object that takes two
-              arguments, an instance of this class and a dict
-              representing an incoming message.
-        """
+        """Initialize the class."""
         self.name = name
         self.settings = settings
         self.callback = callback
