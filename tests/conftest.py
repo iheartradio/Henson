@@ -2,6 +2,8 @@
 
 import pytest
 
+from ingestion.registry import Registry
+
 
 @pytest.fixture
 def modules_tmpdir(tmpdir, monkeypatch):
@@ -21,3 +23,9 @@ def mock_service(modules_tmpdir):
     # Add a couple of other modules that can be used for testing errors.
     service.join('bad_import.py').write('import not_a_real_module')
     service.join('type_error.py').write('1 + "a"')
+
+
+@pytest.fixture
+def registry():
+    """Create an application registry."""
+    return Registry()
