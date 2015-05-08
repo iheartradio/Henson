@@ -6,6 +6,11 @@ import click
 
 from ingestion.kafka import Kafka
 from ingestion.importer import import_from_service, ServiceImportError
+from ingestion.registry import Registry
+
+__all__ = ('Application',)
+
+registry = Registry()
 
 
 class Application:
