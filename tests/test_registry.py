@@ -1,5 +1,7 @@
 """Test the application registry."""
 
+import pytest
+
 
 def test_adding_to_empty_registry(registry):
     """Test that adding to an empty registry returns the added app."""
@@ -15,6 +17,18 @@ def test_adding_multiple_to_registry(registry):
     registry.current_application = obj1
     registry.current_application = obj2
     assert registry.current_application == obj2
+
+
+def test_current_app_raises_attributeerror(registry):
+    """Test that the current_app property raises AttributeError."""
+    with pytest.raises(AttributeError):
+        registry.current_app
+
+
+def test_current_app_setter_raises_attributeerror(registry):
+    """Test that the current_app setter raises AttributeError."""
+    with pytest.raises(AttributeError):
+        registry.current_app = 1
 
 
 def test_empty_registry(registry):
