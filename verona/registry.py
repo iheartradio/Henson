@@ -9,8 +9,6 @@ class Registry:
 
     The registry provides easy access to the most recently registered
     application.
-
-    .. versionadded:: 0.3.0
     """
 
     def __init__(self):
@@ -48,7 +46,7 @@ class Registry:
         """Return the most recently registered application.
 
         Returns:
-            :class:~`ingestion.service.Application`: The most recent
+            :class:`~verona.Application`: The most recent
               application. None if no applications have been registered.
         """
         if not self._applications:
@@ -60,7 +58,7 @@ class Registry:
         """Register a new application.
 
         Args:
-            app (:class:`~ingestion.service.Application`): The
+            app (:class:`~verona.Application`): The
               application to register.
         """
         self._applications.append(app)

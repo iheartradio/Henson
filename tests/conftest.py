@@ -1,8 +1,8 @@
-"""Test configuration."""
+"""Test the application registry."""
 
 import pytest
 
-from ingestion.registry import Registry
+from verona.registry import Registry
 
 
 @pytest.fixture
@@ -29,3 +29,13 @@ def mock_service(modules_tmpdir):
 def registry():
     """Create an application registry."""
     return Registry()
+
+
+@pytest.fixture
+def settings():
+    """Create a configuration object."""
+    class Config:
+        A = 1
+        B = 2
+
+    return Config
