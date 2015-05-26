@@ -15,3 +15,8 @@ Configuration
 
 .. autoclass:: henson.config.Config
    :members:
+
+Proxies
+=======
+
+.. autoclass:: henson.utils.ProxyObject
