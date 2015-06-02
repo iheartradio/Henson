@@ -6,16 +6,14 @@ A framework for running a Python service driven by a consumer.
 
 .. code::
 
-    from henson import Application
+    from itertools import count
 
-    class Consumer:
-        def read(self):
-            yield
+    from henson import Application
 
     def callback(app, data):
         print(data)
 
-    app = Application(__name__, consumer=consumer, callback=callback)
+    app = Application(__name__, consumer=count(), callback=callback)
 
     if __name__ == '__main__':
         app.run_forever()
