@@ -19,10 +19,10 @@ class Application:
         name (str): The name of the application.
         settings (object, optional): An object with attributed-based
           settings.
-        consumer (optional): Any object that has a ``read`` message
-          which returns a generator that yields instances of any type
-          that is supported by ``callback``. While this isn't required,
-          it must be provided before the application can be run.
+        consumer (optional): Any object that is an iterator or an
+          iterable and yields instances of any type that is supported by
+          ``callback``. While this isn't required, it must be provided
+          before the application can be run.
         callback (callable, optional): A callable object that takes two
           arguments, an instance of this class and the incoming message.
           While this isn't required, it must be prodivded before the
@@ -58,7 +58,7 @@ class Application:
         if not callable(self.callback):
             raise TypeError('The specified callback is not callable.')
 
-        messages = self.consumer.read()
+        messages = iter(self.consumer)
         while True:
             try:
                 message = next(messages)
