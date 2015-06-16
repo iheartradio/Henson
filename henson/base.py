@@ -4,11 +4,8 @@ import logging
 import sys
 
 from .config import Config
-from .registry import Registry
 
 __all__ = ('Application',)
-
-registry = Registry()
 
 
 class Application:
@@ -50,8 +47,6 @@ class Application:
         self._logger = logger
 
         self.consumer = consumer
-
-        registry.current_application = self
 
     @property
     def logger(self):
