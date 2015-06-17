@@ -15,3 +15,9 @@ Configuration
 
 .. autoclass:: henson.config.Config
    :members:
+
+Extensions
+==========
+
+.. autoclass:: henson.extensions.Extension
+   :members:

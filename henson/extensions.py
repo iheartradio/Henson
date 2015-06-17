@@ -11,6 +11,9 @@ class Extension:
         app (optional): An application instance that has an attribute
           named settings that contains a mapping of settings to interact
           with a database.
+
+
+    .. versionadded:: 0.2.0
     """
 
     def __init__(self, app=None):
