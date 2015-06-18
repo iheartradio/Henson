@@ -71,6 +71,7 @@ Contents:
    :maxdepth: 1
 
    interface
+   extensions
    api
 
 
