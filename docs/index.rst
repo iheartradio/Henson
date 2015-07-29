@@ -43,6 +43,13 @@ Quickstart
     if __name__ == '__main__':
         app.run_forever()
 
+Running Applications
+====================
+
+.. code::
+
+    $ henson run path.to.module:app_attribute
+
 Logging
 =======
 

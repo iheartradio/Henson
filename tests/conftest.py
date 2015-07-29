@@ -2,6 +2,8 @@
 
 import pytest
 
+from click.testing import CliRunner
+
 
 class Application:
 
@@ -31,3 +33,9 @@ def settings():
 def test_app():
     """Return a test application."""
     return Application()
+
+
+@pytest.fixture
+def click_runner():
+    """Return a click CLI runner."""
+    return CliRunner()
