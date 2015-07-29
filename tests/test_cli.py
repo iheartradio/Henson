@@ -27,11 +27,18 @@ def test_run_only_module(click_runner):
             'path.to.module:application_name' in result.output)
 
 
-def test_run_failed_import(click_runner):
-    """Test that the run command fails with an unimportable module."""
+def test_run_failed_loader(click_runner):
+    """Test that the run command fails with a module that is not found."""
     result = click_runner.invoke(run, ['mymodule:app'])
     assert result.exit_code != 0
-    assert 'Error: Unable to import mymodule.' in result.output
+    assert 'Error: Unable to find an import loader' in result.output
+
+
+def test_run_failed_import(click_runner, bad_mock_service):
+    """Test that the run command fails on dependency import errors."""
+    result = click_runner.invoke(run, ['bad_import:app'])
+    assert result.exit_code != 0
+    assert 'Error: Unable to import bad_import' in result.output
 
 
 def test_run_attribute_error(click_runner):
@@ -49,3 +56,10 @@ def test_run_non_henson_app(click_runner):
     assert result.exit_code != 0
     assert ("Error: app must be an instance of a Henson application. Got "
             "<class 'int'>" in result.output)
+
+
+def test_run_forever(click_runner, good_mock_service):
+    """Tests that run_forever is called on the imported app."""
+    result = click_runner.invoke(run, ['good_import:app'])
+    assert result.exit_code == 0
+    assert 'Run, Forrest, run!' in result.output
