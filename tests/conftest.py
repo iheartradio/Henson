@@ -1,9 +1,14 @@
 """Test the application registry."""
 
+from inspect import getsource
 import pytest
 
+from click.testing import CliRunner
 
-class Application:
+from henson import Application
+
+
+class MockApplication(Application):
 
     """A stub application that can be used for testing.
 
@@ -15,6 +20,9 @@ class Application:
         """Initialize the instance."""
         self.name = 'testing'
         self.settings = settings
+
+    def run_forever(self):
+        print('Run, Forrest, run!')
 
 
 @pytest.fixture
@@ -30,4 +38,36 @@ def settings():
 @pytest.fixture
 def test_app():
     """Return a test application."""
-    return Application()
+    return MockApplication()
+
+
+@pytest.fixture
+def click_runner():
+    """Return a click CLI runner."""
+    return CliRunner()
+
+
+@pytest.fixture
+def modules_tmpdir(tmpdir, monkeypatch):
+    """Add a temporary directory for modules to sys.path."""
+    tmp = tmpdir.mkdir('tmp_modules')
+    monkeypatch.syspath_prepend(str(tmp))
+    return tmp
+
+
+@pytest.fixture
+def bad_mock_service(modules_tmpdir):
+    """Create a module for a fake service that cannot be imported."""
+    modules_tmpdir.join('bad_import.py').write('import not_a_real_module')
+
+
+@pytest.fixture
+def good_mock_service(modules_tmpdir):
+    """Create a module for a fake service."""
+    good_import = modules_tmpdir.join('good_import.py')
+    good_import.write(getsource(MockApplication))
+    good_import.write('\n'.join((
+        'from henson import Application',
+        getsource(MockApplication),
+        'app = MockApplication()',
+    )))
