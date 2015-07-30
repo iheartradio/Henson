@@ -80,6 +80,7 @@ Contents:
    interface
    extensions
    api
+   changes
 
 
 .. todo:: Testing
