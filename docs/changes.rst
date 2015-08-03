@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 0.2.1
+-------------
+
+Released 2015-08-03
+
+- Automatically insert the present working directory at the beginning of
+  sys.path to remove the need for modifying the PYTHONPATH or installing a
+  package to run a Henson application
+
 Version 0.2.0
 -------------
 
