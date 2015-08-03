@@ -28,6 +28,11 @@ def run(application_path):
                                    'application_path must be of the form '
                                    'path.to.module:application_name')
 
+    # Add the present working directory to the import path so that
+    # services can be found without installing them to site-packages
+    # or modifying PYTHONPATH
+    sys.path.insert(0, '.')
+
     # Then, try to find an import loader for the import_path
     # NOTE: this is to handle the case where a module is found but not
     # importable because of dependency import errors (Python 3 only)
