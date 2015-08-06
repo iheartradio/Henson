@@ -45,8 +45,22 @@ class Application:
         self.callback = callback
         self.error_callback = error_callback
         self._logger = logger
+        self._messages = None
 
         self.consumer = consumer
+
+    @property
+    def messages(self):
+        """Return an iterator for the consumer.
+
+        Raises:
+            TypeError: If the consumer is None.
+        """
+        if self._messages is None:
+            if self.consumer is None:
+                raise TypeError('The consumer cannot be None.')
+            self._messages = iter(self.consumer)
+        return self._messages
 
     @property
     def logger(self):
@@ -55,6 +69,23 @@ class Application:
             self._logger = logging.getLogger(self.name)
         return self._logger
 
+    def process_message(self):
+        """Process a single message."""
+        logger = self.logger
+
+        try:
+            message = next(self.messages)
+        except StopIteration:
+            # If there are no messages left, simply continue processing
+            pass
+        except BaseException:
+            logger.error('message.failed', exc_info=sys.exc_info())
+            if self.error_callback:
+                self.error_callback(self, message)
+        else:
+            logger.info('message.received')
+            self.callback(self, message)
+
     def run_forever(self):
         """Consume from the consumer until interrupted.
 
@@ -62,8 +93,6 @@ class Application:
             TypeError: If the consumer is None or the callback isn't
               callable.
         """
-        if self.consumer is None:
-            raise TypeError('The consumer cannot be None.')
         if not callable(self.callback):
             raise TypeError('The specified callback is not callable.')
 
@@ -71,20 +100,10 @@ class Application:
 
         logger.info('application.started')
 
-        messages = iter(self.consumer)
         while True:
             try:
-                message = next(messages)
+                self.process_message()
             except KeyboardInterrupt:
                 break
-            except StopIteration:
-                continue
-            except BaseException:
-                logger.error('message.failed', exc_info=sys.exc_info())
-                if self.error_callback:
-                    self.error_callback(self, message)
-            else:
-                logger.info('message.received')
-                self.callback(self, message)
 
         logger.info('application.stopped')
