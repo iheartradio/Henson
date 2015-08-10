@@ -23,6 +23,8 @@ Quickstart
 
 .. code::
 
+    # file_printer.py3
+
     from henson import Application
 
     class FileConsumer:
@@ -40,15 +42,24 @@ Quickstart
     app.callback = callback
     app.consumer = FileConsumer(__file__)
 
-    if __name__ == '__main__':
-        app.run_forever()
-
 Running Applications
 ====================
 
-.. code::
+Henson provides a CLI command to run your applications. To run the application
+defined in the quickstart above, cd to the directory containing the module and
+run::
 
     $ henson run path.to.module:app_attribute
+
+When developing locally, applications often need to be restarted as changes are
+made. To make this easier, Henson provides a ``--reloader`` option to the
+``run`` command. With this option enabled, Henson will watch an application's
+root directory and restart the application automatically when changes are
+detected::
+
+    $ henson run file_printer:app --reloader
+
+.. note:: The ``--reloader`` option is not recommended for production use.
 
 Logging
 =======
