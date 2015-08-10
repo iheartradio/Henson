@@ -3,11 +3,16 @@
 """Collection of Henson CLI tasks."""
 
 from importlib import find_loader, import_module
+
+import os
 import sys
+
+from watchdog.observers import Observer
 
 import click
 
-from .base import Application
+from ..base import Application
+from .reloader import ApplicationReloaderRunner, FunctionCallingEventHandler
 
 
 @click.group(context_settings={'help_option_names': ('-h', '--help')})
@@ -16,8 +21,9 @@ def cli():
 
 
 @cli.command(context_settings={'help_option_names': ('-h', '--help')})
+@click.option('--reloader/--no-reloader', default=False)
 @click.argument('application_path')
-def run(application_path):
+def run(application_path, reloader):
     """Import and run an application."""
     # First, validate that the import path is specified in the correct
     # format
@@ -62,9 +68,40 @@ def run(application_path):
                                    'app must be an instance of a Henson '
                                    'application. Got {}'.format(type(app)))
 
-    # Finally, run the app
-    click.echo('Running {}.{} forever...'.format(import_path, app_name))
-    app.run_forever()
+    if reloader:
+        # If the reloader is requested, create threads for running the
+        # application and watching the file system for changes
+        click.echo('Running {}.{} with reloader...'.format(
+            import_path,
+            app_name,
+        ))
+
+        # Find the root of the application and watch for changes
+        watchdir = os.path.abspath(module.__file__)
+        for _ in import_path.split('.'):
+            watchdir = os.path.dirname(watchdir)
+
+        # The observer thread watches for and reacts to changes
+        observer = Observer()
+        runner = ApplicationReloaderRunner(module, app_name)
+        handler = FunctionCallingEventHandler(
+            runner.restart,
+            patterns=['*.py'],
+            ignore_directories=True,
+        )
+        observer.schedule(handler, watchdir, recursive=True)
+
+        # The runner thread runs the app
+        runner.restart()
+        observer.start()
+
+        # Keep running as long as the observer thread is
+        observer.join()
+
+    else:
+        # If the reloader is not needed, avoid the overhead
+        click.echo('Running {}.{} forever...'.format(import_path, app_name))
+        app.run_forever()
 
 if __name__ == '__main__':
     sys.exit(cli())

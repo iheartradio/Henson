@@ -1,8 +1,16 @@
 Changelog
 =========
 
+Version 0.3.0
+-------------
+
+Release date TBD
+
+- Add ``--reloader`` option to ``henson run``
+
+
 Version 0.2.1
-+-------------
+-------------
 
 Released 2015-08-03
 
