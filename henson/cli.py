@@ -26,48 +26,68 @@ def cli():
 @click.argument('application_path')
 def run(application_path, reloader):
     """Import and run an application."""
-    # First, validate that the import path is specified in the correct
-    # format
-    try:
-        import_path, app_name = application_path.split(':')
-    except ValueError:
-        raise click.BadOptionUsage('application_path',
-                                   'application_path must be of the form '
-                                   'path.to.module:application_name')
-
     # Add the present working directory to the import path so that
     # services can be found without installing them to site-packages
     # or modifying PYTHONPATH
     sys.path.insert(0, '.')
 
+    # First, find the module that should be imported
+    application_path_parts = application_path.split(':', 1)
+    import_path = application_path_parts.pop(0)
+
     # Then, try to find an import loader for the import_path
     # NOTE: this is to handle the case where a module is found but not
     # importable because of dependency import errors (Python 3 only)
     if not find_loader(import_path):
-        raise click.BadOptionUsage('application_path',
-                                   'Unable to find an import loader for '
-                                   '{}.'.format(import_path))
+        raise click.BadOptionUsage(
+            'application_path',
+            'Unable to find an import loader for {}.'.format(import_path),
+        )
 
     # Once found, import the module and handle any dependency errors
-    try:
-        module = import_module(import_path)
-    except ImportError:
-        raise click.BadOptionUsage('application_path',
-                                   'Unable to import {}. Make sure all '
-                                   'dependencies are installed and on '
-                                   'PYTHONPATH.'.format(import_path))
+    module = import_module(import_path)
 
-    # Get the application from the module
+    # If an application name is specified, use that to select the
+    # application instance
     try:
+        app_name = application_path_parts.pop()
         app = getattr(module, app_name)
-    except AttributeError as e:
-        raise click.BadOptionUsage('application_path', str(e))
+        # Fail if the attribute specified is not a Henson application
+        if not isinstance(app, Application):
+            raise click.BadOptionUsage(
+                'application_path',
+                'app must be an instance of a Henson application. '
+                'Got {}'.format(type(app)),
+            )
 
-    # Fail if the attribute specified is not a Henson application
-    if not isinstance(app, Application):
-        raise click.BadOptionUsage('application_path',
-                                   'app must be an instance of a Henson '
-                                   'application. Got {}'.format(type(app)))
+    # If no application name is specified, try to automatically select
+    # the correct module attribute based on type
+    except IndexError:
+        app_candidates = []
+        for name in dir(module):
+            attr = getattr(module, name)
+            if isinstance(attr, Application):
+                app_candidates.append((name, attr))
+
+        # If there are zero app_candidates, there's nothing to run.
+        if not app_candidates:
+            raise click.BadOptionUsage(
+                'application_path',
+                'No Henson application found. Please specify the '
+                'application by name or run a different module.',
+            )
+
+        # If there are more than one, the choice of which app to run is
+        # ambiguous.
+        if len(app_candidates) > 1:
+            raise click.BadOptionUsage(
+                'application_path',
+                'More than one Henson application found in {}. Please '
+                'specify a application by name (probably one of [{}]).'.format(
+                    import_path, ', '.join(ac[0] for ac in app_candidates)),
+            )
+
+        app_name, app = app_candidates[0]
 
     if reloader:
         # If the reloader is requested, create threads for running the
@@ -106,7 +126,7 @@ def run(application_path, reloader):
 
     else:
         # If the reloader is not needed, avoid the overhead
-        click.echo('Running {}.{} forever...'.format(import_path, app_name))
+        click.echo('Running {}.{} forever ...'.format(import_path, app_name))
         app.run_forever()
 
 if __name__ == '__main__':

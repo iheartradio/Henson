@@ -7,6 +7,9 @@ Version 0.3.0
 Release date TBD
 
 - Add ``--reloader`` option to ``henson run``
+- Automatically detect instances of Henson applications when running ``henson
+  run`` if no attribute name is specified and there exists only one instance of
+  an application in the loaded module
 
 
 Version 0.2.1

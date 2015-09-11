@@ -65,9 +65,20 @@ def bad_mock_service(modules_tmpdir):
 def good_mock_service(modules_tmpdir):
     """Create a module for a fake service."""
     good_import = modules_tmpdir.join('good_import.py')
-    good_import.write(getsource(MockApplication))
     good_import.write('\n'.join((
         'from henson import Application',
         getsource(MockApplication),
         'app = MockApplication()',
+    )))
+
+
+@pytest.fixture
+def double_mock_service(modules_tmpdir):
+    """Create a module with two fake services."""
+    double_service = modules_tmpdir.join('double_service.py')
+    double_service.write('\n'.join((
+        'from henson import Application',
+        getsource(MockApplication),
+        'app1 = MockApplication()',
+        'app2 = MockApplication()',
     )))
