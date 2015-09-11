@@ -23,7 +23,7 @@ Quickstart
 
 .. code::
 
-    # file_printer.py3
+    # file_printer.py
 
     from henson import Application
 
@@ -49,7 +49,15 @@ Henson provides a CLI command to run your applications. To run the application
 defined in the quickstart above, cd to the directory containing the module and
 run::
 
-    $ henson run path.to.module:app_attribute
+    $ henson run file_printer
+
+If a module contains only one instance of a Henson
+:class:`~henson.base.Application`, ``henson run`` will automatically detect
+this and run it. If more than one application exists within the module, the
+desired application's name must be specified, e.g.  ``henson run
+file_printer:app``. This form always takes precedence over the former, and the
+henson cli will not attempt to fall back to an auto-detected application if
+there is a problem with the name specified.
 
 When developing locally, applications often need to be restarted as changes are
 made. To make this easier, Henson provides a ``--reloader`` option to the
