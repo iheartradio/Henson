@@ -10,7 +10,7 @@ Release date TBD
 - Automatically detect instances of Henson applications when running ``henson
   run`` if no attribute name is specified and there exists only one instance of
   an application in the loaded module
-
+- Add REQUIRED_SETTINGS functionality to the Extension class
 
 Version 0.2.1
 -------------
