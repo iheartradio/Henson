@@ -2,13 +2,14 @@
 language: python
 
 # Run the test runner using the same version of Python we use.
-python: 3.4
+python: 3.5
 
 # Install the test runner.
 install: pip install tox
 
 # Run each environment separately so we get errors back from all of them.
 env:
+  - TOX_ENV=py35
   - TOX_ENV=py34
   - TOX_ENV=pep8
   - TOX_ENV=docs
