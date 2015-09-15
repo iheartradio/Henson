@@ -40,3 +40,22 @@ def test_extension_with_default_settings(test_app):
 
     CustomExtension(test_app)
     assert test_app.settings == {'foo': 'bar'}
+
+
+def test_extension_required_settings_exception(test_app):
+    """Tests that init_app raises REQUIRED_SETTINGS exceptions."""
+    class CustomExtension(Extension):
+        REQUIRED_SETTINGS = ('foo', 'bar')
+
+    with pytest.raises(KeyError):
+        CustomExtension(test_app)
+
+
+def test_extension_with_required_settings(test_app):
+    """Tests that init_app doesn't raise REQUIRED_SETTINGS exceptions."""
+    class CustomExtension(Extension):
+        REQUIRED_SETTINGS = ('foo', 'bar')
+
+    test_app.settings['foo'] = 1
+    test_app.settings['bar'] = 2
+    CustomExtension(test_app)
