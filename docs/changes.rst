@@ -4,7 +4,7 @@ Changelog
 Version 0.3.0
 -------------
 
-Release date TBD
+Released 2015-09-21
 
 - Add ``--reloader`` option to ``henson run``
 - Automatically detect instances of Henson applications when running ``henson
