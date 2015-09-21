@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.4.0
+-------------
+
+Released TBD
+
 Version 0.3.0
 -------------
 
