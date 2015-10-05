@@ -6,6 +6,8 @@ Version 0.4.0
 
 Released TBD
 
+- Remove argument to override application-level logger
+
 Version 0.3.0
 -------------
 
