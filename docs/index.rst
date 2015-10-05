@@ -84,6 +84,7 @@ Contents:
    :maxdepth: 1
 
    interface
+   callbacks
    extensions
    api
    changes

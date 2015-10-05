@@ -8,6 +8,9 @@ Released TBD
 
 - Remove argument to override application-level logger
 - Improve test coverage
+- Add ``message_preprocessors`` to handle preprocessing incoming messages
+- Add ``result_postprocessors`` to handle postprocessing results of processing
+  the incoming messages
 
 Version 0.3.0
 -------------
