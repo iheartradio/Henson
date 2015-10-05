@@ -72,24 +72,11 @@ detected::
 Logging
 =======
 
-Henson applications provide a default logger. By default, the logger returned
-by calling :func:`logging.getLogger` will be used. The name of the application
-will be used to specify which logger to use. Any configuration needed should be
-done (e.g., :func:`logging.basicConfig`, :func:`logging.config.dictConfig`)
-should be done before the application is started.
-
-If you want to use a specific logger instance with your application, however,
-you can provide it when you instantiate the application::
-
-    app = Application(__name__, logger=logging.getLogger('specificlogger'))
-
-While this example is a bit contrived, this is useful if you want to use
-third-party loggers (e.g., `structlog <http://structlog.rtfd.org>`_) to handle
-your logging::
-
-    import structlog
-
-    app = Application(__name__, logger=structlog.get_logger())
+Henson applications provide a default logger. The logger returned by calling
+:func:`logging.getLogger` will be used. The name of the application will be
+used to specify which logger to use. Any configuration needed should (e.g.,
+:func:`logging.basicConfig`, :func:`logging.config.dictConfig`) should be done
+before the application is started.
 
 Contents:
 

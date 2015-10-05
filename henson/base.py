@@ -31,29 +31,20 @@ class Application:
           takes two arguments, an instance of this class and the
           incoming message. This callback will be called any time there
           is an exception while reading a message from the queue.
-        logger (:class:`~logging.RootLogger`, optional): A logger object
-          to be associated with the application. If none is provided,
-          the return value of :func:`~logging.getLogger` will be used.
     """
 
     def __init__(self, name, settings=None, *, consumer=None, callback=None,
-                 error_callback=None, logger=None):
+                 error_callback=None):
         """Initialize the class."""
         self.name = name
         self.settings = Config()
         self.settings.from_object(settings or {})
         self.callback = callback
         self.error_callback = error_callback
-        self._logger = logger
 
         self.consumer = consumer
 
-    @property
-    def logger(self):
-        """Return the application's logger."""
-        if not self._logger:
-            self._logger = logging.getLogger(self.name)
-        return self._logger
+        self.logger = logging.getLogger(self.name)
 
     def run_forever(self):
         """Consume from the consumer until interrupted.
@@ -67,9 +58,7 @@ class Application:
         if not callable(self.callback):
             raise TypeError('The specified callback is not callable.')
 
-        logger = self.logger
-
-        logger.info('application.started')
+        self.logger.info('application.started')
 
         messages = iter(self.consumer)
         while True:
@@ -80,11 +69,11 @@ class Application:
             except StopIteration:
                 continue
             except BaseException:
-                logger.error('message.failed', exc_info=sys.exc_info())
+                self.logger.error('message.failed', exc_info=sys.exc_info())
                 if self.error_callback:
                     self.error_callback(self, message)
             else:
-                logger.info('message.received')
+                self.logger.info('message.received')
                 self.callback(self, message)
 
-        logger.info('application.stopped')
+        self.logger.info('application.stopped')
