@@ -24,23 +24,39 @@ class Application:
           ``callback``. While this isn't required, it must be provided
           before the application can be run.
         callback (callable, optional): A callable object that takes two
-          arguments, an instance of this class and the incoming message.
-          While this isn't required, it must be prodivded before the
-          application can be run.
+          arguments, an instance of this class and the (possibly)
+          preprocessed incoming message.  While this isn't required, it
+          must be provided before the application can be run.
         error_callback (callable, optional): A callable object that
           takes two arguments, an instance of this class and the
           incoming message. This callback will be called any time there
           is an exception while reading a message from the queue.
+        message_preprocessors (List[callable], optional): A callable
+          object that takes two arguments, an instance of this class and
+          the incoming message. This callback will be called first for
+          each incoming message and its return value will be passed to
+          ``callback``.
+        result_postprocessors (List[callable], optional): A callable
+          object that takes two arguments, an instance of this class and
+          the each result of ``callback``.
+
+    .. versionchanged:: 0.4.0
+       The ``message_preprocessors`` and ``result_postprocessors``
+       parameters have been added to optionally preprocess an incoming
+       msesage and postprocess all results.
     """
 
     def __init__(self, name, settings=None, *, consumer=None, callback=None,
-                 error_callback=None):
+                 error_callback=None, message_preprocessors=None,
+                 result_postprocessors=None):
         """Initialize the class."""
         self.name = name
         self.settings = Config()
         self.settings.from_object(settings or {})
         self.callback = callback
         self.error_callback = error_callback
+        self.message_preprocessors = message_preprocessors or []
+        self.result_postprocessors = result_postprocessors or []
 
         self.consumer = consumer
 
@@ -58,6 +74,14 @@ class Application:
         if not callable(self.callback):
             raise TypeError('The specified callback is not callable.')
 
+        if not all(callable(cb) for cb in self.message_preprocessors):
+            raise TypeError(
+                'Message preprocessors must be callable.')
+
+        if not all(callable(cb) for cb in self.result_postprocessors):
+            raise TypeError(
+                'Result postprocessors must be callable.')
+
         self.logger.info('application.started')
 
         messages = iter(self.consumer)
@@ -74,6 +98,22 @@ class Application:
                     self.error_callback(self, message)
             else:
                 self.logger.info('message.received')
-                self.callback(self, message)
+
+                for preprocess in self.message_preprocessors:
+                    message = preprocess(self, message)
+                    self.logger.info('message.preprocessed')
+
+                results = self.callback(self, message)
+
+                if results is not None:
+                    # TODO: Evaluate this further. What are the pros and
+                    # cons of operating over multiple results versus
+                    # keeping it just one. As we look into asyncio,
+                    # there may be benefits to yielding from callback
+                    # rather than returning.
+                    for result in results:
+                        for postprocess in self.result_postprocessors:
+                            result = postprocess(self, result)
+                            self.logger.info('result.postprocessed')
 
         self.logger.info('application.stopped')
