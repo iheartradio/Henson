@@ -88,14 +88,14 @@ class Application:
         while True:
             try:
                 message = next(messages)
-            except KeyboardInterrupt:
-                break
             except StopIteration:
                 continue
-            except BaseException:
+            except Exception:
                 self.logger.error('message.failed', exc_info=sys.exc_info())
                 if self.error_callback:
                     self.error_callback(self, message)
+            except BaseException:
+                break
             else:
                 self.logger.info('message.received')
 

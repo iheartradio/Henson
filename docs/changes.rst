@@ -11,6 +11,8 @@ Released TBD
 - Add ``message_preprocessors`` to handle preprocessing incoming messages
 - Add ``result_postprocessors`` to handle postprocessing results of processing
   the incoming messages
+- Restructure exception catching to handle ``Exception`` and break on
+  ``BaseException``
 
 Version 0.3.0
 -------------
