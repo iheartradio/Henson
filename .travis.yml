@@ -15,3 +15,8 @@ env:
   - TOX_ENV=docs
 script:
   - tox -e $TOX_ENV
+
+# Control the branches that get built.
+branches:
+  only:
+    - master
