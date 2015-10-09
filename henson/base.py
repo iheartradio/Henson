@@ -9,7 +9,6 @@ __all__ = ('Application',)
 
 
 class Application:
-
     """A service application.
 
     Each message received from the consumer will be passed to the

@@ -4,7 +4,6 @@ __all__ = ('Extension',)
 
 
 class Extension:
-
     """A base class for Hension extensions.
 
     Args:
