@@ -4,7 +4,6 @@ __all__ = ('Config',)
 
 
 class Config(dict):
-
     """Custom mapping used to extend and override an app's settings."""
 
     def from_mapping(self, mapping):
