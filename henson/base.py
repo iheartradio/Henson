@@ -30,14 +30,14 @@ class Application:
           takes two arguments, an instance of this class and the
           incoming message. This callback will be called any time there
           is an exception while reading a message from the queue.
-        message_preprocessors (List[callable], optional): A callable
-          object that takes two arguments, an instance of this class and
-          the incoming message. This callback will be called first for
-          each incoming message and its return value will be passed to
-          ``callback``.
-        result_postprocessors (List[callable], optional): A callable
-          object that takes two arguments, an instance of this class and
-          the each result of ``callback``.
+        message_preprocessors (List[callable], optional): A list of
+          callable objects that take two arguments, an instance of this
+          class and the incoming message. These callbacks will be called
+          first for each incoming message and its return value will be
+          passed to ``callback``.
+        result_postprocessors (List[callable], optional): A list of
+          callable objects that takes two arguments, an instance of this
+          class and the each result of ``callback``.
 
     .. versionchanged:: 0.4.0
        The ``message_preprocessors`` and ``result_postprocessors``
@@ -70,6 +70,7 @@ class Application:
         """
         if self.consumer is None:
             raise TypeError('The consumer cannot be None.')
+
         if not callable(self.callback):
             raise TypeError('The specified callback is not callable.')
 
