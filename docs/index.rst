@@ -86,6 +86,7 @@ Contents:
    interface
    callbacks
    extensions
+   contrib
    api
    changes
 

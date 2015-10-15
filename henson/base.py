@@ -26,17 +26,18 @@ class Application:
           arguments, an instance of this class and the (possibly)
           preprocessed incoming message.  While this isn't required, it
           must be provided before the application can be run.
-        error_callback (callable, optional): A callable object that
-          takes two arguments, an instance of this class and the
-          incoming message. This callback will be called any time there
-          is an exception while reading a message from the queue.
+        error_callbacks (List[callable], optional): A list of callable
+          objects that take three arguments: an instance of this class,
+          the incoming message, and the exception that was raised. These
+          callbacks will be called any time there is an exception while
+          reading a message from the queue.
         message_preprocessors (List[callable], optional): A list of
-          callable objects that take two arguments, an instance of this
+          callable objects that take two arguments: an instance of this
           class and the incoming message. These callbacks will be called
           first for each incoming message and its return value will be
           passed to ``callback``.
         result_postprocessors (List[callable], optional): A list of
-          callable objects that takes two arguments, an instance of this
+          callable objects that takes two arguments: an instance of this
           class and the each result of ``callback``.
 
     .. versionchanged:: 0.4.0
@@ -46,14 +47,14 @@ class Application:
     """
 
     def __init__(self, name, settings=None, *, consumer=None, callback=None,
-                 error_callback=None, message_preprocessors=None,
+                 error_callbacks=None, message_preprocessors=None,
                  result_postprocessors=None):
         """Initialize the class."""
         self.name = name
         self.settings = Config()
         self.settings.from_object(settings or {})
         self.callback = callback
-        self.error_callback = error_callback
+        self.error_callbacks = error_callbacks or []
         self.message_preprocessors = message_preprocessors or []
         self.result_postprocessors = result_postprocessors or []
 
@@ -82,19 +83,18 @@ class Application:
             raise TypeError(
                 'Result postprocessors must be callable.')
 
+        if not all(callable(cb) for cb in self.error_callbacks):
+            raise TypeError(
+                'Error callbacks must be callable.')
+
         self.logger.info('application.started')
 
         messages = iter(self.consumer)
         while True:
             try:
                 message = next(messages)
-            except StopIteration:
-                continue
-            except Exception:
-                self.logger.error('message.failed', exc_info=sys.exc_info())
-                if self.error_callback:
-                    self.error_callback(self, message)
             except BaseException:
+                self.logger.error('message.failed', exc_info=sys.exc_info())
                 break
             else:
                 self.logger.info('message.received')
@@ -103,17 +103,28 @@ class Application:
                     message = preprocess(self, message)
                     self.logger.info('message.preprocessed')
 
-                results = self.callback(self, message)
-
-                if results is not None:
-                    # TODO: Evaluate this further. What are the pros and
-                    # cons of operating over multiple results versus
-                    # keeping it just one. As we look into asyncio,
-                    # there may be benefits to yielding from callback
-                    # rather than returning.
-                    for result in results:
-                        for postprocess in self.result_postprocessors:
-                            result = postprocess(self, result)
-                            self.logger.info('result.postprocessed')
+                try:
+                    results = self.callback(self, message)
+                except Exception as e:
+                    self.logger.error(
+                        'message.failed', exc_info=sys.exc_info())
+                    for callback in self.error_callbacks:
+                        # Any callback can prevent execution of further
+                        # callbacks by raising StopIteration.
+                        try:
+                            callback(self, message, e)
+                        except StopIteration:
+                            break
+                else:
+                    if results is not None:
+                        # TODO: Evaluate this further. What are the pros
+                        # and cons of operating over multiple results
+                        # versus keeping it just one. As we look into
+                        # asyncio, there may be benefits to yielding
+                        # from callback rather than returning.
+                        for result in results:
+                            for postprocess in self.result_postprocessors:
+                                result = postprocess(self, result)
+                                self.logger.info('result.postprocessed')
 
         self.logger.info('application.stopped')
