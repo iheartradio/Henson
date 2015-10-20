@@ -21,6 +21,8 @@ class MockApplication(Application):
         self.name = 'testing'
         self.settings = settings
 
+        self.error_callbacks = []
+
     def run_forever(self):
         print('Run, Forrest, run!')
 
@@ -39,6 +41,14 @@ def settings():
 def test_app():
     """Return a test application."""
     return MockApplication()
+
+
+@pytest.fixture
+def callback():
+    """Return a stubbed callback function."""
+    def _inner(*args):
+        pass
+    return _inner
 
 
 @pytest.fixture
