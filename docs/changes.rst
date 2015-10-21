@@ -13,6 +13,7 @@ Released TBD
   the incoming messages
 - Restructure exception catching to handle ``Exception`` and break on
   ``BaseException``
+- Add Retry to ``contrib`` packages to allow for automatic message retrying
 
 Version 0.3.0
 -------------
