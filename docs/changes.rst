@@ -4,7 +4,7 @@ Changelog
 Version 0.4.0
 -------------
 
-Released TBD
+Released 2015-10-23
 
 - Remove argument to override application-level logger
 - Improve test coverage
