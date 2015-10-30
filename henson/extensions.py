@@ -10,9 +10,6 @@ class Extension:
         app (optional): An application instance that has an attribute
           named settings that contains a mapping of settings to interact
           with a database.
-
-
-    .. versionadded:: 0.2.0
     """
 
     def __init__(self, app=None):
@@ -48,9 +45,6 @@ class Extension:
         initialization, an exception will be raised if a value is not
         set for each key specified in this list. Extensions should
         define this where appropriate. Defaults to ``()``.
-
-
-        .. versionadded:: 0.3.0
         """
         return ()
 

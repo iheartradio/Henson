@@ -1,15 +1,15 @@
 """Test the application registry."""
 
+import asyncio
 from inspect import getsource
-import pytest
 
 from click.testing import CliRunner
+import pytest
 
 from henson import Application
 
 
 class MockApplication(Application):
-
     """A stub application that can be used for testing.
 
     Args:
@@ -25,6 +25,32 @@ class MockApplication(Application):
 
     def run_forever(self):
         print('Run, Forrest, run!')
+
+
+class MockConsumer:
+    """A stub consumer that can be used for testing."""
+
+    @asyncio.coroutine
+    def read(self):
+        """Return an item."""
+        return 1
+
+
+@pytest.fixture
+def callback():
+    """Return a stubbed callback function."""
+    def _inner(*args):
+        pass
+    return _inner
+
+
+@pytest.fixture
+def coroutine():
+    """Return a coroutine function."""
+    @asyncio.coroutine
+    def _inner(*args, **kwargs):
+        pass
+    return _inner
 
 
 @pytest.fixture
@@ -44,11 +70,9 @@ def test_app():
 
 
 @pytest.fixture
-def callback():
-    """Return a stubbed callback function."""
-    def _inner(*args):
-        pass
-    return _inner
+def test_consumer():
+    """Return a test consumer."""
+    return MockConsumer()
 
 
 @pytest.fixture
