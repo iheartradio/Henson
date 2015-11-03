@@ -25,6 +25,8 @@ Quickstart
 
     # file_printer.py
 
+    import asyncio
+
     from henson import Application
 
     class FileConsumer:
@@ -35,8 +37,14 @@ Quickstart
             with open(self.filename) as f:
                 yield from f
 
+        @asyncio.coroutine
+        def read(self):
+            return next(self)
+
+    @asyncio.coroutine
     def callback(app, data):
         print(app.name, 'received:', data)
+        return data
 
     app = Application(__name__)
     app.callback = callback

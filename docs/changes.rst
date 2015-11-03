@@ -6,6 +6,8 @@ Version 0.5.0
 
 Released TBD
 
+- Use ``asyncio`` to process messages asynchronously (*Backwards Incompatible*)
+
 Version 0.4.0
 -------------
 
