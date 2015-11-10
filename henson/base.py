@@ -70,17 +70,21 @@ class Application:
 
         self.logger = logging.getLogger(self.name)
 
-    def run_forever(self, num_workers=1):
+    def run_forever(self, num_workers=1, loop=None):
         """Consume from the consumer until interrupted.
 
         Args:
-            num_workers (int): The number of asynchronous tasks to use
-              to process messages received through the consumer.
-              Defaults to 1.
+            num_workers (Optional[int]): The number of asynchronous
+                tasks to use to process messages received through the
+                consumer.  Defaults to 1.
+            loop (Optional[asyncio.asyncio.BaseEventLoop]): An event
+                loop that, if provided, will be used for running the
+                application. If none is provided, the default event loop
+                will be used.
 
         Raises:
             TypeError: If the consumer is None or the callback isn't
-              callable.
+                callable.
 
         .. versionchanged:: 0.5.0
 
@@ -107,7 +111,8 @@ class Application:
 
         self.logger.info('application.started')
 
-        loop = asyncio.get_event_loop()
+        # Use the specified event loop, otherwise use the default one.
+        loop = loop or asyncio.get_event_loop()
 
         # Create an asynchronous queue to pass the messages from the
         # consumer to the processor. The queue should hold one message
@@ -145,6 +150,29 @@ class Application:
             loop.close()
 
         self.logger.info('application.stopped')
+
+    @asyncio.coroutine
+    def _apply_callbacks(self, callbacks, value):
+        """Apply callbacks to a set of arguments.
+
+        The callbacks will be called in the order in which they are
+        specified, with the return value of each being passed to the
+        next callback.
+
+        Args:
+            callbacks (List[callable]): The callbacks to apply to the
+                provided arguments.
+            value: The value to pass to the first callback.
+
+        Returns:
+            The return value of the final callback.
+
+        .. versionadded:: 0.5.0
+        """
+        for callback in callbacks:
+            value = yield from callback(self, value)
+            yield from asyncio.sleep(0.1)
+        return value
 
     @asyncio.coroutine
     def _consume(self, queue):
@@ -188,9 +216,9 @@ class Application:
 
             message = yield from queue.get()
 
-            for preprocess in self.message_preprocessors:
-                message = yield from preprocess(self, message)
-                self.logger.info('message.preprocessed')
+            message = yield from self._apply_callbacks(
+                self.message_preprocessors, message)
+            self.logger.info('message.preprocessed')
 
             try:
                 results = yield from self.callback(self, message)
@@ -205,13 +233,26 @@ class Application:
                     except StopIteration:
                         break
             else:
-                if results is not None:
-                    # TODO: Evaluate this further. What are the pros
-                    # and cons of operating over multiple results
-                    # versus keeping it just one. As we look into
-                    # asyncio, there may be benefits to yielding
-                    # from callback rather than returning.
-                    for result in results:
-                        for postprocess in self.result_postprocessors:
-                            result = yield from postprocess(self, result)
-                            self.logger.info('result.postprocessed')
+                yield from self._postprocess_results(results)
+
+    @asyncio.coroutine
+    def _postprocess_results(self, results):
+        """Postprocess the results.
+
+        Args:
+            results (iterable): The results returned by processing the
+                message.
+
+        .. versionadded:: 0.5.0
+        """
+        if results is None:
+            return
+
+        # TODO: Evaluate this further. What are the pros and cons of
+        # operating over multiple results versus keeping it just one.
+        # As we look into asyncio, there may be benefits to yielding
+        # from callback rather than returning.
+        for result in results:
+            yield from self._apply_callbacks(
+                self.result_postprocessors, result)
+            self.logger.info('result.postprocessed')

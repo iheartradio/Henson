@@ -7,20 +7,43 @@ import pytest
 from henson.base import Application
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize('original, expected', ((1, 4), (2, 6)))
+def test_apply_callbacks(original, expected):
+    """Test Application._apply_callbacks."""
+    callback1_called = False
+    callback2_called = False
+
+    @asyncio.coroutine
+    def callback1(app, message):
+        nonlocal callback1_called
+        callback1_called = True
+        return message + 1
+
+    @asyncio.coroutine
+    def callback2(app, message):
+        nonlocal callback2_called
+        callback2_called = True
+        return message * 2
+
+    app = Application('testing')
+
+    actual = yield from app._apply_callbacks([callback1, callback2], original)
+    assert actual == expected
+
+    assert callback1_called
+    assert callback2_called
+
+
 def test_consume(event_loop, test_consumer):
     """Test Application._consume."""
     queue = asyncio.Queue(maxsize=1)
 
     app = Application('testing', consumer=test_consumer)
 
-    # Eventually stop the event loop so that we can check the contents
-    # of the queue.
-    def stop_loop():
-        event_loop.stop()
-    event_loop.call_soon(stop_loop)
-
     asyncio.async(app._consume(queue))
 
+    event_loop.stop()  # Run the event loop once.
     event_loop.run_forever()
 
     # The size of the queue won't ever be larger than 1 because of the
@@ -72,6 +95,35 @@ def test_message_preprocessor_not_coroutine_typeerror(preprocess, coroutine):
     assert 'message preprocessors' in str(e.value).lower()
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize('original, expected', ((1, 2), (2, 3)))
+def test_postprocess_results(original, expected):
+    """Test Application._postprocess_results."""
+    callback1_called = False
+    callback2_called = False
+
+    @asyncio.coroutine
+    def callback1(app, message):
+        nonlocal callback1_called
+        callback1_called = True
+        return message + 1
+
+    @asyncio.coroutine
+    def callback2(app, message):
+        nonlocal callback2_called
+        callback2_called = True
+        # Nothing is returned out of Application._postprocess_results so
+        # the assertion needs to happen inside a callback.
+        assert message == expected
+
+    app = Application('testing', result_postprocessors=[callback1, callback2])
+
+    yield from app._postprocess_results([original])
+
+    assert callback1_called
+    assert callback2_called
+
+
 @pytest.mark.parametrize('postprocess', (None, '', False, 10, sum))
 def test_result_postprocessor_not_coroutine_typeerror(postprocess, coroutine):
     """Test TypeError is raised if postprocessor isn't a coroutine."""
@@ -84,3 +136,48 @@ def test_result_postprocessor_not_coroutine_typeerror(postprocess, coroutine):
     with pytest.raises(TypeError) as e:
         app.run_forever()
     assert 'result postprocessors' in str(e.value).lower()
+
+
+def test_run_forever(event_loop, test_consumer):
+    """Test Application.run_forever."""
+    preprocess_called = False
+    callback_called = False
+    postprocess_called = False
+
+    @asyncio.coroutine
+    def preprocess(app, message):
+        nonlocal preprocess_called
+        preprocess_called = True
+        return message + 1
+
+    @asyncio.coroutine
+    def callback(app, message):
+        nonlocal callback_called
+        callback_called = True
+        return [message + 1]
+
+    @asyncio.coroutine
+    def postprocess(app, result):
+        nonlocal postprocess_called
+        postprocess_called = True
+        assert result == 3
+
+    app = Application(
+        'testing',
+        consumer=test_consumer,
+        callback=callback,
+        message_preprocessors=[preprocess],
+        result_postprocessors=[postprocess],
+    )
+
+    # Eventually stop the event loop so that we can exit out of the
+    # test.
+    def stop_loop():
+        event_loop.stop()
+    event_loop.call_later(1, stop_loop)
+
+    app.run_forever(loop=event_loop)
+
+    assert preprocess_called
+    assert callback_called
+    assert postprocess_called
