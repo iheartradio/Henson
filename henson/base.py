@@ -17,30 +17,30 @@ class Application:
 
     Args:
         name (str): The name of the application.
-        settings (object, optional): An object with attributed-based
-          settings.
+        settings (Optional[object]): An object with attributed-based
+            settings.
         consumer (optional): Any object that is an iterator or an
-          iterable and yields instances of any type that is supported by
-          ``callback``. While this isn't required, it must be provided
-          before the application can be run.
-        callback (asyncio.coroutine, optional): A callable object that
-          takes two arguments, an instance of this class and the
-          (possibly) preprocessed incoming message.  While this isn't
-          required, it must be provided before the application can be
-          run.
-        error_callbacks (List[asyncio.coroutine], optional): A list of
-          callable objects that take three arguments: an instance of
-          this class, the incoming message, and the exception that was
-          raised. These callbacks will be called any time there is an
-          exception while reading a message from the queue.
-        message_preprocessors (List[asyncio.coroutine], optional): A
-          list of callable objects that take two arguments: an instance
-          of this class and the incoming message. These callbacks will
-          be called first for each incoming message and its return value
-          will be passed to ``callback``.
-        result_postprocessors (List[asyncio.coroutine], optional): A
-          list of callable objects that takes two arguments: an instance
-          of this class and the each result of ``callback``.
+            iterable and yields instances of any type that is supported
+            by ``callback``. While this isn't required, it must be
+            provided before the application can be run.
+        callback (Optional[asyncio.coroutine]): A callable object that
+            takes two arguments, an instance of this class and the
+            (possibly) preprocessed incoming message.  While this isn't
+            required, it must be provided before the application can be
+            run.
+        error_callbacks (Optional[List[asyncio.coroutine]]): A list of
+            callable objects that take three arguments: an instance of
+            this class, the incoming message, and the exception that was
+            raised. These callbacks will be called any time there is an
+            exception while reading a message from the queue.
+        message_preprocessors (Optional[List[asyncio.coroutine]]): A
+            list of callable objects that take two arguments: an
+            instance of this class and the incoming message. These
+            callbacks will be called first for each incoming message and
+            its return value will be passed to ``callback``.
+        result_postprocessors (Optional[List[asyncio.coroutine]]): A
+            list of callable objects that takes two arguments: an
+            instance of this class and the each result of ``callback``.
 
     .. versionchanged:: 0.5.0
 
