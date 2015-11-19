@@ -7,18 +7,22 @@ class Extension:
     """A base class for Hension extensions.
 
     Args:
-        app (optional): An application instance that has an attribute
-          named settings that contains a mapping of settings to interact
-          with a database.
+        app (Optional[henson.base.Application]): An application instance
+            that has an attribute named settings that contains a mapping
+            of settings to interact with a database.
     """
 
     def __init__(self, app=None):
         """Initialize an instance of the extension.
 
-        If app is provided, init_app will also be called with the provided
-        application. Otherwise, init_app must be called with an application
-        explicitly before the extension's reference to an application is
-        usable.
+        If app is provided, init_app will also be called with the
+        provided application. Otherwise, init_app must be called with an
+        application explicitly before the extension's reference to an
+        application is usable.
+
+        Args:
+            app (Optional[henson.base.Application]): An application
+                instance that will be initialized.
         """
         self._app = None
 
@@ -49,11 +53,15 @@ class Extension:
         return ()
 
     def init_app(self, app):
-        """Configure the application with the extension's default settings.
+        """Initialize the application.
+
+        In addition to associating the extension's default settings with
+        the application, this method will also check for the extension's
+        required settings.
 
         Args:
-            app: Application instance that has an attribute named
-              settings that contains a mapping of settings.
+            app (Optional[henson.base.Application]): An application
+                instance that will be initialized.
         """
         for key, value in self.DEFAULT_SETTINGS.items():
             app.settings.setdefault(key, value)
