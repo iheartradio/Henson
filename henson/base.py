@@ -59,8 +59,13 @@ class Application:
                  result_postprocessors=None):
         """Initialize the class."""
         self.name = name
+
+        # Configuration
         self.settings = Config()
         self.settings.from_object(settings or {})
+        self.settings.setdefault('SLEEP_TIME', 0.1)
+
+        # Callbacks
         self.callback = callback
         self.error_callbacks = error_callbacks or []
         self.message_preprocessors = message_preprocessors or []
@@ -171,7 +176,6 @@ class Application:
         """
         for callback in callbacks:
             value = yield from callback(self, value)
-            yield from asyncio.sleep(0.1)
         return value
 
     @asyncio.coroutine
@@ -211,7 +215,7 @@ class Application:
                 if task.cancelled():
                     break
 
-                yield from asyncio.sleep(0.1)
+                yield from asyncio.sleep(self.settings['SLEEP_TIME'])
                 continue
 
             message = yield from queue.get()
