@@ -6,7 +6,11 @@ setup(
     packages=find_packages(exclude=['tests']),
     install_requires=[
         # TODO: determine minimum versions for requirements
-        'click',
+        # Version 6 of click changed the signature of BadOptionUsage,
+        # breaking version 5.x compatible code. While we decide how best
+        # to handle this in Henson, click is being pinned to older
+        # versions of click.
+        'click<6.0',
         'watchdog>=0.8.3',
     ],
     tests_require=[
