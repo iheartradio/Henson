@@ -65,7 +65,11 @@ this and run it. If more than one application exists within the module, the
 desired application's name must be specified, e.g.  ``henson run
 file_printer:app``. This form always takes precedence over the former, and the
 henson cli will not attempt to fall back to an auto-detected application if
-there is a problem with the name specified.
+there is a problem with the name specified. If the attribute specified by the
+name after ``:`` is callable, ``henson run`` will call it and use the returned
+value as the application. Any callable specified this way should require no
+arguments and return an instance of an :class:`~henson.base.Application`.
+Autodiscovery of callables that return applications is not currently supported.
 
 When developing locally, applications often need to be restarted as changes are
 made. To make this easier, Henson provides a ``--reloader`` option to the

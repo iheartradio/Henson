@@ -52,6 +52,11 @@ def run(application_path, reloader):
     try:
         app_name = application_path_parts.pop()
         app = getattr(module, app_name)
+        # If the attribute specified by app_name is a callable, assume
+        # it is an application factory and call it to get an instance of
+        # a Henson application.
+        if callable(app):
+            app = app()
         # Fail if the attribute specified is not a Henson application
         if not isinstance(app, Application):
             raise click.BadOptionUsage(
