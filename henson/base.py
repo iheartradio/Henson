@@ -3,8 +3,10 @@
 import asyncio
 import logging
 import sys
+import traceback
 
 from .config import Config
+from .exceptions import Abort
 
 __all__ = ('Application',)
 
@@ -157,6 +159,19 @@ class Application:
         self.logger.info('application.stopped')
 
     @asyncio.coroutine
+    def _abort(self, exc):
+        """Log the aborted message.
+
+        Args:
+            exc (henson.exceptions.Abort): The exception to be logged.
+
+        .. versionadded:: 0.5.0
+        """
+        tb = sys.exc_info()[-1]
+        stack = traceback.extract_tb(tb, 1)[-1]
+        self.logger.info(exc, message=exc.message, aborted_by=stack)
+
+    @asyncio.coroutine
     def _apply_callbacks(self, callbacks, value):
         """Apply callbacks to a set of arguments.
 
@@ -220,12 +235,14 @@ class Application:
 
             message = yield from queue.get()
 
-            message = yield from self._apply_callbacks(
-                self.message_preprocessors, message)
-            self.logger.info('message.preprocessed')
-
             try:
+                message = yield from self._apply_callbacks(
+                    self.message_preprocessors, message)
+                self.logger.info('message.preprocessed')
+
                 results = yield from self.callback(self, message)
+            except Abort as e:
+                yield from self._abort(e)
             except Exception as e:
                 self.logger.error(
                     'message.failed', exc_info=sys.exc_info())
@@ -257,6 +274,9 @@ class Application:
         # As we look into asyncio, there may be benefits to yielding
         # from callback rather than returning.
         for result in results:
-            yield from self._apply_callbacks(
-                self.result_postprocessors, result)
-            self.logger.info('result.postprocessed')
+            try:
+                yield from self._apply_callbacks(
+                    self.result_postprocessors, result)
+                self.logger.info('result.postprocessed')
+            except Abort as e:
+                yield from self._abort(e)

@@ -16,6 +16,12 @@ Configuration
 .. autoclass:: henson.config.Config
    :members:
 
+Exceptions
+==========
+
+.. automodule:: henson.exceptions
+   :members:
+
 Extensions
 ==========
 

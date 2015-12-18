@@ -7,6 +7,7 @@ Version 0.5.0
 Released TBD
 
 - Use ``asyncio`` to process messages asynchronously (*Backwards Incompatible*)
+- Add ``Abort`` to allow for a coroutine to cancel processing of a message
 
 Version 0.4.0
 -------------

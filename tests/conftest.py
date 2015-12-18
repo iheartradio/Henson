@@ -35,12 +35,26 @@ class MockConsumer:
 
 
 @pytest.fixture
+def cancelled_future(event_loop):
+    """Return a Future that's been cancelled."""
+    future = asyncio.Future(loop=event_loop)
+    future.cancel()
+    return future
+
+
+@pytest.fixture
 def coroutine():
     """Return a coroutine function."""
     @asyncio.coroutine
     def _inner(*args, **kwargs):
         pass
     return _inner
+
+
+@pytest.fixture
+def queue():
+    """Return an asynchronous queue."""
+    return asyncio.Queue()
 
 
 @pytest.fixture
