@@ -161,6 +161,8 @@ def test_run_forever(event_loop, test_consumer):
         nonlocal postprocess_called
         postprocess_called = True
         assert result == 3
+        # Stop the event loop from running again.
+        event_loop.stop()
 
     app = Application(
         'testing',
@@ -169,12 +171,6 @@ def test_run_forever(event_loop, test_consumer):
         message_preprocessors=[preprocess],
         result_postprocessors=[postprocess],
     )
-
-    # Eventually stop the event loop so that we can exit out of the
-    # test.
-    def stop_loop():
-        event_loop.stop()
-    event_loop.call_later(1, stop_loop)
 
     app.run_forever(loop=event_loop)
 
