@@ -1,8 +1,54 @@
 """CLI tests."""
 
+from inspect import getsource
+
+from click.testing import CliRunner
 import pytest  # noqa
 
 from henson.cli import cli, run
+
+
+@pytest.fixture
+def click_runner():
+    """Return a click CLI runner."""
+    return CliRunner()
+
+
+@pytest.fixture
+def modules_tmpdir(tmpdir, monkeypatch):
+    """Add a temporary directory for modules to sys.path."""
+    tmp = tmpdir.mkdir('tmp_modules')
+    monkeypatch.syspath_prepend(str(tmp))
+    return tmp
+
+
+@pytest.fixture
+def bad_mock_service(modules_tmpdir):
+    """Create a module for a fake service that cannot be imported."""
+    modules_tmpdir.join('bad_import.py').write('import not_a_real_module')
+
+
+@pytest.fixture
+def good_mock_service(modules_tmpdir, test_app):
+    """Create a module for a fake service."""
+    good_import = modules_tmpdir.join('good_import.py')
+    good_import.write('\n'.join((
+        'from henson import Application',
+        getsource(type(test_app)),
+        'app = MockApplication()',
+    )))
+
+
+@pytest.fixture
+def double_mock_service(modules_tmpdir, test_app):
+    """Create a module with two fake services."""
+    double_service = modules_tmpdir.join('double_service.py')
+    double_service.write('\n'.join((
+        'from henson import Application',
+        getsource(type(test_app)),
+        'app1 = MockApplication()',
+        'app2 = MockApplication()',
+    )))
 
 
 def test_entry_point(click_runner):
@@ -41,7 +87,7 @@ def test_run_failed_import(click_runner, bad_mock_service):
 
 
 def test_run_attribute_error(click_runner):
-    """Tests that the run command fails without an application attribute."""
+    """Test that the run command fails without an application attribute."""
     # NOTE: we don't need a real application here, just something that
     # doesn't have an attribute called `app`.
     result = click_runner.invoke(run, ['logging:app'])
@@ -50,7 +96,7 @@ def test_run_attribute_error(click_runner):
 
 
 def test_run_non_henson_app(click_runner):
-    """Tests that the run command fails with the incorrect app type."""
+    """Test that the run command fails with the incorrect app type."""
     result = click_runner.invoke(run, ['logging:INFO'])
     assert result.exit_code != 0
     assert ("app must be an instance of a Henson application. Got "
@@ -58,28 +104,28 @@ def test_run_non_henson_app(click_runner):
 
 
 def test_run_without_application(click_runner):
-    """Tests that the run command fails without an app name or instance."""
+    """Test that the run command fails without an app name or instance."""
     result = click_runner.invoke(run, ['logging'])
     assert result.exit_code != 0
     assert 'No Henson application found' in result.output
 
 
 def test_run_with_two_applications(click_runner, double_mock_service):
-    """Tests that the run command fails with ambiguous app choices."""
+    """Test that the run command fails with ambiguous app choices."""
     result = click_runner.invoke(run, ['double_service'])
     assert result.exit_code != 0
     assert 'More than one Henson application found' in result.output
 
 
 def test_run_app_autodetect(click_runner, good_mock_service):
-    """Tests that an app can be selected automatically."""
+    """Test that an app can be selected automatically."""
     result = click_runner.invoke(run, ['good_import'])
     assert result.exit_code == 0
     assert 'Run, Forrest, run!' in result.output
 
 
 def test_run_forever(click_runner, good_mock_service):
-    """Tests that run_forever is called on the imported app."""
+    """Test that run_forever is called on the imported app."""
     result = click_runner.invoke(run, ['good_import:app'])
     assert result.exit_code == 0
     assert 'Run, Forrest, run!' in result.output

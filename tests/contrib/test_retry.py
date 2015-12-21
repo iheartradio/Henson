@@ -7,6 +7,14 @@ import pytest
 from henson.contrib import retry
 
 
+@pytest.fixture
+def callback():
+    """Return a stubbed callback function."""
+    def _inner(*args):
+        pass
+    return _inner
+
+
 @pytest.mark.parametrize('number_of_retries, threshold, expected', [
     # Retry forever.
     (0, None, False),
