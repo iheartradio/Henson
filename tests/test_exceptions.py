@@ -45,9 +45,11 @@ def test_abort_preprocessor(event_loop, cancelled_future, queue):
     app = Application(
         'testing',
         callback=callback,
-        message_preprocessors=[preprocess1, preprocess2],
-        result_postprocessors=[postprocess],
     )
+
+    app.message_preprocessor(preprocess1)
+    app.message_preprocessor(preprocess2)
+    app.result_postprocessor(postprocess)
 
     event_loop.run_until_complete(app._process(cancelled_future, queue))
 
@@ -82,8 +84,9 @@ def test_abort_callback(event_loop, cancelled_future, queue):
     app = Application(
         'testing',
         callback=callback,
-        result_postprocessors=[postprocess],
     )
+
+    app.result_postprocessor(postprocess)
 
     event_loop.run_until_complete(app._process(cancelled_future, queue))
 
@@ -122,8 +125,10 @@ def test_abort_postprocess(event_loop, cancelled_future, queue):
     app = Application(
         'testing',
         callback=callback,
-        result_postprocessors=[postprocess1, postprocess2],
     )
+
+    app.result_postprocessor(postprocess1)
+    app.result_postprocessor(postprocess2)
 
     event_loop.run_until_complete(app._process(cancelled_future, queue))
 

@@ -35,13 +35,13 @@ def test_apply_callbacks(original, expected):
     assert callback2_called
 
 
-def test_consume(event_loop, test_consumer):
+def test_consume(event_loop, test_consumer, cancelled_future):
     """Test Application._consume."""
     queue = asyncio.Queue(maxsize=1)
 
     app = Application('testing', consumer=test_consumer)
 
-    asyncio.async(app._consume(queue))
+    asyncio.async(app._consume(queue, cancelled_future))
 
     event_loop.stop()  # Run the event loop once.
     event_loop.run_forever()
@@ -62,37 +62,24 @@ def test_consumer_is_none_typeerror():
 def test_callback_not_coroutine_typerror(callback):
     """Test TypeError is raised if callback isn't a coroutine."""
     app = Application('testing', consumer=[], callback=callback)
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError):
         app.run_forever()
-    assert 'specified callback' in str(e.value).lower()
 
 
 @pytest.mark.parametrize('error_callback', (None, '', False, 10, sum))
 def test_error_callback_not_coroutine_typeerror(error_callback, coroutine):
     """Test TypeError is raised if error callback isn't a coroutine."""
-    app = Application(
-        'testing',
-        consumer=[],
-        callback=coroutine,
-        error_callbacks=[error_callback],
-    )
-    with pytest.raises(TypeError) as e:
-        app.run_forever()
-    assert 'error callbacks' in str(e.value).lower()
+    app = Application('testing')
+    with pytest.raises(TypeError):
+        app.error_callback(error_callback)
 
 
 @pytest.mark.parametrize('preprocess', (None, '', False, 10, sum))
 def test_message_preprocessor_not_coroutine_typeerror(preprocess, coroutine):
     """Test TypeError is raised if preprocessor isn't a coroutine."""
-    app = Application(
-        'testing',
-        consumer=[],
-        callback=coroutine,
-        message_preprocessors=[preprocess],
-    )
-    with pytest.raises(TypeError) as e:
-        app.run_forever()
-    assert 'message preprocessors' in str(e.value).lower()
+    app = Application('testing')
+    with pytest.raises(TypeError):
+        app.message_preprocessor(preprocess)
 
 
 @pytest.mark.asyncio
@@ -116,7 +103,10 @@ def test_postprocess_results(original, expected):
         # the assertion needs to happen inside a callback.
         assert message == expected
 
-    app = Application('testing', result_postprocessors=[callback1, callback2])
+    app = Application('testing')
+
+    app.result_postprocessor(callback1)
+    app.result_postprocessor(callback2)
 
     yield from app._postprocess_results([original])
 
@@ -127,22 +117,39 @@ def test_postprocess_results(original, expected):
 @pytest.mark.parametrize('postprocess', (None, '', False, 10, sum))
 def test_result_postprocessor_not_coroutine_typeerror(postprocess, coroutine):
     """Test TypeError is raised if postprocessor isn't a coroutine."""
-    app = Application(
-        'testing',
-        consumer=[],
-        callback=coroutine,
-        result_postprocessors=[postprocess],
-    )
-    with pytest.raises(TypeError) as e:
-        app.run_forever()
-    assert 'result postprocessors' in str(e.value).lower()
+    app = Application('testing')
+    with pytest.raises(TypeError):
+        app.result_postprocessor(postprocess)
 
 
-def test_run_forever(event_loop, test_consumer):
+@pytest.mark.parametrize('startup', (None, '', False, 10, sum))
+def test_startup_not_coroutine_typeerror(startup, coroutine):
+    """Test TypeError is raised if startup isn't a coroutine."""
+    app = Application('testing')
+    with pytest.raises(TypeError):
+        app.application_startup(startup)
+
+
+@pytest.mark.parametrize('teardown', (None, '', False, 10, sum))
+def test_teardown_not_coroutine_typeerror(teardown, coroutine):
+    """Test TypeError is raised if teardown isn't a coroutine."""
+    app = Application('testing')
+    with pytest.raises(TypeError):
+        app.application_teardown(teardown)
+
+
+def test_run_forever(event_loop, test_consumer_with_abort):
     """Test Application.run_forever."""
+    startup_called = False
     preprocess_called = False
     callback_called = False
     postprocess_called = False
+    teardown_called = False
+
+    @asyncio.coroutine
+    def startup(app):
+        nonlocal startup_called
+        startup_called = True
 
     @asyncio.coroutine
     def preprocess(app, message):
@@ -160,20 +167,27 @@ def test_run_forever(event_loop, test_consumer):
     def postprocess(app, result):
         nonlocal postprocess_called
         postprocess_called = True
-        assert result == 3
-        # Stop the event loop from running again.
-        event_loop.stop()
+
+    @asyncio.coroutine
+    def teardown(app):
+        nonlocal teardown_called
+        teardown_called = True
 
     app = Application(
         'testing',
-        consumer=test_consumer,
+        consumer=test_consumer_with_abort,
         callback=callback,
-        message_preprocessors=[preprocess],
-        result_postprocessors=[postprocess],
     )
+
+    app.application_startup(startup)
+    app.message_preprocessor(preprocess)
+    app.result_postprocessor(postprocess)
+    app.application_teardown(teardown)
 
     app.run_forever(loop=event_loop)
 
+    assert startup_called
     assert preprocess_called
     assert callback_called
     assert postprocess_called
+    assert teardown_called
