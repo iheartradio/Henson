@@ -124,18 +124,16 @@ class Application:
         # Create an asynchronous queue to pass the messages from the
         # consumer to the processor. The queue should hold one message
         # for each processing task.
-        queue = asyncio.Queue(maxsize=num_workers)
+        queue = asyncio.Queue(maxsize=num_workers, loop=loop)
 
-        # Create a future for the consumer.
-        consumer = asyncio.async(self._consume(queue))
+        # Create a task for the consumer.
+        consumer = loop.create_task(self._consume(queue))
 
-        # Create futures to process each message received by the
+        # Create tasks to process each message received by the
         # consumer. The loop should wait until they are done.
-        _tasks = [
-            asyncio.async(self._process(consumer, queue))
+        tasks = [
+            loop.create_task(self._process(consumer, queue))
             for _ in range(num_workers)]
-        tasks = asyncio.gather(*_tasks)
-        asyncio.wait(tasks)
 
         try:
             # Run the loop forever.
