@@ -3,28 +3,18 @@
 """Collection of Henson CLI tasks."""
 
 from importlib import find_loader, import_module
-from threading import Thread
-
 import os
 import sys
+from threading import Thread
 
+from argh import ArghParser, CommandError
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
-
-import click
 
 from .base import Application
 
 
-@click.group(context_settings={'help_option_names': ('-h', '--help')})
-def cli():
-    """CLI entry point."""
-
-
-@cli.command(context_settings={'help_option_names': ('-h', '--help')})
-@click.option('--reloader/--no-reloader', default=False)
-@click.argument('application_path')
-def run(application_path, reloader):
+def run(application_path, reloader=False):
     """Import and run an application."""
     # Add the present working directory to the import path so that
     # services can be found without installing them to site-packages
@@ -39,18 +29,21 @@ def run(application_path, reloader):
     # NOTE: this is to handle the case where a module is found but not
     # importable because of dependency import errors (Python 3 only)
     if not find_loader(import_path):
-        raise click.BadOptionUsage(
-            'application_path',
+        raise CommandError(
             'Unable to find an import loader for {}.'.format(import_path),
         )
 
     # Once found, import the module and handle any dependency errors
+    # TODO: Wrap the ImportError raised here to provide more meaningful
+    # error messages to the end user
     module = import_module(import_path)
 
     # If an application name is specified, use that to select the
     # application instance
     try:
         app_name = application_path_parts.pop()
+        # TODO: Wrap the AttributeError raised here to provide more
+        # meaningful error messages to the end user
         app = getattr(module, app_name)
         # If the attribute specified by app_name is a callable, assume
         # it is an application factory and call it to get an instance of
@@ -59,8 +52,7 @@ def run(application_path, reloader):
             app = app()
         # Fail if the attribute specified is not a Henson application
         if not isinstance(app, Application):
-            raise click.BadOptionUsage(
-                'application_path',
+            raise CommandError(
                 'app must be an instance of a Henson application. '
                 'Got {}'.format(type(app)),
             )
@@ -76,8 +68,7 @@ def run(application_path, reloader):
 
         # If there are zero app_candidates, there's nothing to run.
         if not app_candidates:
-            raise click.BadOptionUsage(
-                'application_path',
+            raise CommandError(
                 'No Henson application found. Please specify the '
                 'application by name or run a different module.',
             )
@@ -85,8 +76,7 @@ def run(application_path, reloader):
         # If there are more than one, the choice of which app to run is
         # ambiguous.
         if len(app_candidates) > 1:
-            raise click.BadOptionUsage(
-                'application_path',
+            raise CommandError(
                 'More than one Henson application found in {}. Please '
                 'specify a application by name (probably one of [{}]).'.format(
                     import_path, ', '.join(ac[0] for ac in app_candidates)),
@@ -97,7 +87,7 @@ def run(application_path, reloader):
     if reloader:
         # If the reloader is requested, create threads for running the
         # application and watching the file system for changes
-        click.echo('Running {}.{} with reloader...'.format(
+        print('Running {}.{} with reloader...'.format(
             import_path,
             app_name,
         ))
@@ -131,8 +121,19 @@ def run(application_path, reloader):
 
     else:
         # If the reloader is not needed, avoid the overhead
-        click.echo('Running {}.{} forever ...'.format(import_path, app_name))
+        print('Running {}.{} forever ...'.format(import_path, app_name))
         app.run_forever()
 
+
+def main():
+    """Dispatch the CLI command to the target function."""
+    return parser.dispatch()
+
+
+# Define a parser and add commands to it.
+parser = ArghParser()
+parser.add_commands([run])
+
+
 if __name__ == '__main__':
-    sys.exit(cli())
+    sys.exit(main())
