@@ -2,16 +2,11 @@
 
 from inspect import getsource
 
-from click.testing import CliRunner
-import pytest  # noqa
-
-from henson.cli import cli, run
+from argh import CommandError
+import pytest
 
 
-@pytest.fixture
-def click_runner():
-    """Return a click CLI runner."""
-    return CliRunner()
+from henson.cli import run
 
 
 @pytest.fixture
@@ -51,81 +46,65 @@ def double_mock_service(modules_tmpdir, test_app):
     )))
 
 
-def test_entry_point(click_runner):
-    """Test that the CLI entry point prints the help menu."""
-    result = click_runner.invoke(cli)
-    assert result.exit_code == 0
-    assert 'Commands:' in result.output
-
-
-def test_run_without_app_path(click_runner):
-    """Test that the run command fails without an application_path."""
-    result = click_runner.invoke(run)
-    assert result.exit_code != 0
-    assert 'Missing argument "application_path".' in result.output
-
-
-def test_run_only_module(click_runner):
+def test_run_only_module():
     """Test that the run command fails with a malformed application_path."""
-    result = click_runner.invoke(run, ['mymodule'])
-    assert result.exit_code != 0
-    assert 'Unable to find an import loader for mymodule' in result.output
+    with pytest.raises(CommandError) as e:
+        run('mymodule')
+        assert 'Unable to find an import loader for mymodule' in e.message
 
 
-def test_run_failed_loader(click_runner):
+def test_run_failed_loader():
     """Test that the run command fails with a module that is not found."""
-    result = click_runner.invoke(run, ['mymodule:app'])
-    assert result.exit_code != 0
-    assert 'Unable to find an import loader' in result.output
+    with pytest.raises(CommandError) as e:
+        run('mymodule:app')
+        assert 'Unable to find an import loader' in e.message
 
 
-def test_run_failed_import(click_runner, bad_mock_service):
+def test_run_failed_import(bad_mock_service):
     """Test that the run command fails on dependency import errors."""
-    result = click_runner.invoke(run, ['bad_import:app'])
-    assert result.exit_code != 0
-    assert isinstance(result.exception, ImportError)
+    with pytest.raises(ImportError):
+        run('bad_import:app')
 
 
-def test_run_attribute_error(click_runner):
+def test_run_attribute_error():
     """Test that the run command fails without an application attribute."""
     # NOTE: we don't need a real application here, just something that
     # doesn't have an attribute called `app`.
-    result = click_runner.invoke(run, ['logging:app'])
-    assert result.exit_code != 0
-    assert isinstance(result.exception, AttributeError)
+    with pytest.raises(AttributeError):
+        run('logging:app')
 
 
-def test_run_non_henson_app(click_runner):
+def test_run_non_henson_app():
     """Test that the run command fails with the incorrect app type."""
-    result = click_runner.invoke(run, ['logging:INFO'])
-    assert result.exit_code != 0
-    assert ("app must be an instance of a Henson application. Got "
-            "<class 'int'>" in result.output)
+    with pytest.raises(CommandError) as e:
+        run('logging:INFO')
+        assert ("app must be an instance of a Henson application. Got "
+                "<class 'int'>" in e.message)
 
 
-def test_run_without_application(click_runner):
+def test_run_without_application():
     """Test that the run command fails without an app name or instance."""
-    result = click_runner.invoke(run, ['logging'])
-    assert result.exit_code != 0
-    assert 'No Henson application found' in result.output
+    with pytest.raises(CommandError) as e:
+        run('logging')
+        assert 'No Henson application found' in e.message
 
 
-def test_run_with_two_applications(click_runner, double_mock_service):
+def test_run_with_two_applications(double_mock_service):
     """Test that the run command fails with ambiguous app choices."""
-    result = click_runner.invoke(run, ['double_service'])
-    assert result.exit_code != 0
-    assert 'More than one Henson application found' in result.output
+    with pytest.raises(CommandError) as e:
+        run('double_service')
+        assert 'More than one Henson application found' in e.message
 
 
-def test_run_app_autodetect(click_runner, good_mock_service):
+def test_run_app_autodetect(good_mock_service, capsys):
     """Test that an app can be selected automatically."""
-    result = click_runner.invoke(run, ['good_import'])
-    assert result.exit_code == 0
-    assert 'Run, Forrest, run!' in result.output
+    run('good_import')
+    out, _ = capsys.readouterr()
+    assert 'Run, Forrest, run!' in out
 
 
-def test_run_forever(click_runner, good_mock_service):
+def test_run_forever(good_mock_service, capsys):
     """Test that run_forever is called on the imported app."""
-    result = click_runner.invoke(run, ['good_import:app'])
-    assert result.exit_code == 0
-    assert 'Run, Forrest, run!' in result.output
+    run('good_import:app')
+    out, _ = capsys.readouterr()
+    assert 'Run, Forrest, run!' in out
