@@ -5,6 +5,7 @@ import asyncio
 import pytest
 
 from henson import Application
+from henson.exceptions import Abort
 
 
 class MockApplication(Application):
@@ -31,6 +32,21 @@ class MockConsumer:
     @asyncio.coroutine
     def read(self):
         """Return an item."""
+        return 1
+
+
+class MockAbortingConsumer:
+    """A stub consumer that will raise Abort."""
+
+    _run = False
+
+    @asyncio.coroutine
+    def read(self):
+        """Return an item."""
+        if self._run:
+            raise Abort('testing', {})
+
+        self._run = True
         return 1
 
 
@@ -77,3 +93,9 @@ def test_app():
 def test_consumer():
     """Return a test consumer."""
     return MockConsumer()
+
+
+@pytest.fixture
+def test_consumer_with_abort():
+    """Return a test consumer."""
+    return MockAbortingConsumer()
