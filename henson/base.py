@@ -278,7 +278,11 @@ class Application:
         """
         tb = sys.exc_info()[-1]
         stack = traceback.extract_tb(tb, 1)[-1]
-        self.logger.info(exc, message=exc.message, aborted_by=stack)
+        self.logger.info('callback.aborted', extra={
+            'exception': exc,
+            'message': exc.message,
+            'aborted_by': stack,
+        })
 
     @asyncio.coroutine
     def _apply_callbacks(self, callbacks, value):
@@ -364,8 +368,10 @@ class Application:
             except Abort as e:
                 yield from self._abort(e)
             except Exception as e:
-                self.logger.error(
-                    'message.failed', exc_info=sys.exc_info())
+                self.logger.error('message.failed', extra={
+                    'exc_info': sys.exc_info(),
+                })
+
                 for callback in self._callbacks['error_callbacks']:
                     # Any callback can prevent execution of further
                     # callbacks by raising StopIteration.
@@ -419,11 +425,10 @@ class Application:
 
         self._callbacks[callback_container].append(callback)
 
-        self.logger.info(
-            'callback.registered',
-            type=callback_container,
-            name=callback.__qualname__,
-        )
+        self.logger.info('callback.registered', extra={
+            'type': callback_container,
+            'callback': callback.__qualname__,
+        })
 
     def _teardown(self, future, loop):
         """Tear down the application."""
