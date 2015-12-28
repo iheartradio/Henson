@@ -22,7 +22,7 @@ class MockApplication(Application):
 
         self.error_callbacks = []
 
-    def run_forever(self):
+    def run_forever(self, num_workers=1):
         print('Run, Forrest, run!')
 
 
