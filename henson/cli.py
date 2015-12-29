@@ -15,8 +15,19 @@ from . import __version__
 from .base import Application
 
 
-def run(application_path, reloader=False):
-    """Import and run an application."""
+def run(application_path, reloader=False, workers=1):
+    """Import and run an application.
+
+    Args:
+        application_path (str): The path to the application that should
+            be imported and run.
+        reloader (Optional[bool]): Whether or not to watch for changes
+            within an application and reload the running instance when
+            they are detected. Not recommended for production use.
+            Defaults to False.
+        workers (Optional[int]): How many async workers the application
+            should use to process messages. Defaults to 1.
+    """
     # Add the present working directory to the import path so that
     # services can be found without installing them to site-packages
     # or modifying PYTHONPATH
@@ -100,7 +111,10 @@ def run(application_path, reloader=False):
 
         # Create observer and runner threads
         observer = Observer()
-        runner = Thread(target=app.run_forever)
+        runner = Thread(
+            target=app.run_forever,
+            kwargs={'num_workers': workers},
+        )
 
         # This function is called by watchdog event handler when changes
         # are detected by the observers
@@ -123,7 +137,7 @@ def run(application_path, reloader=False):
     else:
         # If the reloader is not needed, avoid the overhead
         print('Running {}.{} forever ...'.format(import_path, app_name))
-        app.run_forever()
+        app.run_forever(num_workers=workers)
 
 
 def main():
