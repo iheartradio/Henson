@@ -11,6 +11,7 @@ from argh import ArghParser, CommandError
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 
+from . import __version__
 from .base import Application
 
 
@@ -132,6 +133,7 @@ def main():
 
 # Define a parser and add commands to it.
 parser = ArghParser()
+parser.add_argument('--version', action='version', version=__version__)
 parser.add_commands([run])
 
 
