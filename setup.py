@@ -1,8 +1,10 @@
 from setuptools import find_packages, setup
 
+from henson import __version__
+
 setup(
     name='Henson',
-    version='0.5.0',
+    version=__version__,
     packages=find_packages(exclude=['tests']),
     install_requires=[
         # TODO: determine minimum versions for requirements
