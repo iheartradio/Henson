@@ -1,6 +1,7 @@
 """Implementation of the service."""
 
 import asyncio
+from copy import deepcopy
 import logging
 import sys
 import traceback
@@ -58,6 +59,7 @@ class Application:
         self.callback = callback
         self._callbacks = {
             'error_callbacks': [],
+            'message_acknowledgement': [],
             'message_preprocessors': [],
             'result_postprocessors': [],
             'startup_callbacks': [],
@@ -128,6 +130,27 @@ class Application:
         .. versionadded:: 0.5.0
         """
         self._register_callback(callback, 'error_callbacks')
+        return callback
+
+    def message_acknowledgement(self, callback):
+        """Register a message acknowledgement callback.
+
+        Args:
+            callback (asyncio.coroutine): A callable object that takes
+                two arguments: an instance of
+                :class:`henson.base.Application` and the original
+                incoming message as its only argument. It will be called
+                once a message has been fully processed.
+
+        Returns:
+            asyncio.coroutine: The callback.
+
+        Raises:
+            TypeError: If the callback isn't a coroutine.
+
+        .. versionadded:: 0.5.0
+        """
+        self._register_callback(callback, 'message_acknowledgement')
         return callback
 
     def message_preprocessor(self, callback):
@@ -358,6 +381,9 @@ class Application:
                 continue
 
             message = yield from queue.get()
+            # Save a copy of the original message in case its needed
+            # later.
+            original_message = deepcopy(message)
 
             try:
                 message = yield from self._apply_callbacks(
@@ -381,6 +407,12 @@ class Application:
                         break
             else:
                 yield from self._postprocess_results(results)
+            finally:
+                # Don't use _apply_callbacks here since we want to pass
+                # the original message into each callback.
+                for callback in self._callbacks['message_acknowledgement']:
+                    yield from callback(self, original_message)
+                self.logger.info('message.acknowledged')
 
     @asyncio.coroutine
     def _postprocess_results(self, results):
