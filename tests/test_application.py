@@ -67,7 +67,7 @@ def test_callback_not_coroutine_typerror(callback):
 
 
 @pytest.mark.parametrize('error_callback', (None, '', False, 10, sum))
-def test_error_callback_not_coroutine_typeerror(error_callback, coroutine):
+def test_error_callback_not_coroutine_typeerror(error_callback):
     """Test TypeError is raised if error callback isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
@@ -110,7 +110,7 @@ def test_message_acknowledgement_original_message(event_loop, coroutine,
 
 
 @pytest.mark.parametrize('preprocess', (None, '', False, 10, sum))
-def test_message_preprocessor_not_coroutine_typeerror(preprocess, coroutine):
+def test_message_preprocessor_not_coroutine_typeerror(preprocess):
     """Test TypeError is raised if preprocessor isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
@@ -150,7 +150,7 @@ def test_postprocess_results(original, expected):
 
 
 @pytest.mark.parametrize('postprocess', (None, '', False, 10, sum))
-def test_result_postprocessor_not_coroutine_typeerror(postprocess, coroutine):
+def test_result_postprocessor_not_coroutine_typeerror(postprocess):
     """Test TypeError is raised if postprocessor isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
@@ -158,7 +158,7 @@ def test_result_postprocessor_not_coroutine_typeerror(postprocess, coroutine):
 
 
 @pytest.mark.parametrize('startup', (None, '', False, 10, sum))
-def test_startup_not_coroutine_typeerror(startup, coroutine):
+def test_startup_not_coroutine_typeerror(startup):
     """Test TypeError is raised if startup isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
@@ -166,7 +166,7 @@ def test_startup_not_coroutine_typeerror(startup, coroutine):
 
 
 @pytest.mark.parametrize('teardown', (None, '', False, 10, sum))
-def test_teardown_not_coroutine_typeerror(teardown, coroutine):
+def test_teardown_not_coroutine_typeerror(teardown):
     """Test TypeError is raised if teardown isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
