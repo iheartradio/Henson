@@ -34,9 +34,9 @@ class Application:
 
     .. versionchanged:: 0.5.0
 
-        ``callback``, ``error_callbacks``, ``message_preprocessors``,
-        and ``result_postprocessors`` now require coroutines, with all
-        but ``callback`` being removed from ``Application.__init__`` in
+        ``callback``, ``error``, ``message_preprocessor``, and
+        ``result_postprocessor`` now require coroutines, with all but
+        ``callback`` being removed from ``Application.__init__`` in
         favor of decorators.
 
     .. versionchanged:: 0.4.0
@@ -58,59 +58,19 @@ class Application:
         # Callbacks
         self.callback = callback
         self._callbacks = {
-            'error_callbacks': [],
+            'error': [],
             'message_acknowledgement': [],
-            'message_preprocessors': [],
-            'result_postprocessors': [],
-            'startup_callbacks': [],
-            'teardown_callbacks': [],
+            'message_preprocessor': [],
+            'result_postprocessor': [],
+            'startup': [],
+            'teardown': [],
         }
 
         self.consumer = consumer
 
         self.logger = logging.getLogger(self.name)
 
-    def application_startup(self, callback):
-        """Register a startup callback.
-
-        Args:
-            callback (asyncio.coroutine): A callable object that takes
-                an instance of :class:`~henson.base.Application` as its
-                only argument. It will be called once when the
-                application first starts up.
-
-        Returns:
-            asyncio.coroutine: The callback.
-
-        Raises:
-            TypeError: If the callback isn't a coroutine.
-
-        .. versionadded:: 0.5.0
-        """
-        self._register_callback(callback, 'startup_callbacks')
-        return callback
-
-    def application_teardown(self, callback):
-        """Register a teardown callback.
-
-        Args:
-            callback (asyncio.coroutine): A callable object that takes
-                an instance of :class:`~henson.base.Application` as its
-                only argument. It will be called once when the
-                application is shutting down.
-
-        Returns:
-            asyncio.coroutine: The callback.
-
-        Raises:
-            TypeError: If the callback isn't a coroutine.
-
-        .. versionadded:: 0.5.0
-        """
-        self._register_callback(callback, 'teardown_callbacks')
-        return callback
-
-    def error_callback(self, callback):
+    def error(self, callback):
         """Register an error callback.
 
         Args:
@@ -129,7 +89,7 @@ class Application:
 
         .. versionadded:: 0.5.0
         """
-        self._register_callback(callback, 'error_callbacks')
+        self._register_callback(callback, 'error')
         return callback
 
     def message_acknowledgement(self, callback):
@@ -171,7 +131,7 @@ class Application:
 
         .. versionadded:: 0.5.0
         """
-        self._register_callback(callback, 'message_preprocessors')
+        self._register_callback(callback, 'message_preprocessor')
         return callback
 
     def result_postprocessor(self, callback):
@@ -192,7 +152,7 @@ class Application:
 
         .. versionadded:: 0.5.0
         """
-        self._register_callback(callback, 'result_postprocessors')
+        self._register_callback(callback, 'result_postprocessor')
         return callback
 
     def run_forever(self, num_workers=1, loop=None):
@@ -229,7 +189,7 @@ class Application:
         # Start the application.
         tasks = [
             asyncio.async(callback(self), loop=loop) for callback in
-            self._callbacks['startup_callbacks']
+            self._callbacks['startup']
         ]
         future = asyncio.gather(*tasks, loop=loop)
         loop.run_until_complete(future)
@@ -280,7 +240,7 @@ class Application:
             # Teardown
             tasks = [
                 asyncio.async(callback(self)) for callback in
-                self._callbacks['teardown_callbacks']
+                self._callbacks['teardown']
             ]
             future = asyncio.gather(*tasks)
             loop.run_until_complete(future)
@@ -289,6 +249,46 @@ class Application:
             loop.close()
 
         self.logger.info('application.stopped')
+
+    def startup(self, callback):
+        """Register a startup callback.
+
+        Args:
+            callback (asyncio.coroutine): A callable object that takes
+                an instance of :class:`~henson.base.Application` as its
+                only argument. It will be called once when the
+                application first starts up.
+
+        Returns:
+            asyncio.coroutine: The callback.
+
+        Raises:
+            TypeError: If the callback isn't a coroutine.
+
+        .. versionadded:: 0.5.0
+        """
+        self._register_callback(callback, 'startup')
+        return callback
+
+    def teardown(self, callback):
+        """Register a teardown callback.
+
+        Args:
+            callback (asyncio.coroutine): A callable object that takes
+                an instance of :class:`~henson.base.Application` as its
+                only argument. It will be called once when the
+                application is shutting down.
+
+        Returns:
+            asyncio.coroutine: The callback.
+
+        Raises:
+            TypeError: If the callback isn't a coroutine.
+
+        .. versionadded:: 0.5.0
+        """
+        self._register_callback(callback, 'teardown')
+        return callback
 
     @asyncio.coroutine
     def _abort(self, exc):
@@ -387,7 +387,7 @@ class Application:
 
             try:
                 message = yield from self._apply_callbacks(
-                    self._callbacks['message_preprocessors'], message)
+                    self._callbacks['message_preprocessor'], message)
                 self.logger.info('message.preprocessed')
 
                 results = yield from self.callback(self, message)
@@ -396,7 +396,7 @@ class Application:
             except Exception as e:
                 self.logger.error('message.failed', exc_info=sys.exc_info())
 
-                for callback in self._callbacks['error_callbacks']:
+                for callback in self._callbacks['error']:
                     # Any callback can prevent execution of further
                     # callbacks by raising Abort.
                     try:
@@ -432,7 +432,7 @@ class Application:
         for result in results:
             try:
                 yield from self._apply_callbacks(
-                    self._callbacks['result_postprocessors'], result)
+                    self._callbacks['result_postprocessor'], result)
                 self.logger.info('result.postprocessed')
             except Abort as e:
                 yield from self._abort(e)
@@ -464,6 +464,6 @@ class Application:
         """Tear down the application."""
         tasks = [
             asyncio.async(callback(self)) for callback in
-            self._callbacks['teardown_callbacks']]
+            self._callbacks['teardown']]
         future = asyncio.gather(*tasks)
         loop.run_until_complete(future)

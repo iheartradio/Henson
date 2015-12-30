@@ -67,11 +67,11 @@ def test_callback_not_coroutine_typerror(callback):
 
 
 @pytest.mark.parametrize('error_callback', (None, '', False, 10, sum))
-def test_error_callback_not_coroutine_typeerror(error_callback):
+def test_error_not_coroutine_typeerror(error_callback):
     """Test TypeError is raised if error callback isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
-        app.error_callback(error_callback)
+        app.error(error_callback)
 
 
 @pytest.mark.parametrize('acknowledgement', (None, '', False, 10, sum))
@@ -160,7 +160,7 @@ def test_startup_not_coroutine_typeerror(startup):
     """Test TypeError is raised if startup isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
-        app.application_startup(startup)
+        app.startup(startup)
 
 
 @pytest.mark.parametrize('teardown', (None, '', False, 10, sum))
@@ -168,7 +168,7 @@ def test_teardown_not_coroutine_typeerror(teardown):
     """Test TypeError is raised if teardown isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
-        app.application_teardown(teardown)
+        app.teardown(teardown)
 
 
 def test_run_forever(event_loop, test_consumer_with_abort):
@@ -192,7 +192,7 @@ def test_run_forever(event_loop, test_consumer_with_abort):
         callback=callback,
     )
 
-    @app.application_startup
+    @app.startup
     @asyncio.coroutine
     def startup(app):
         nonlocal startup_called
@@ -217,7 +217,7 @@ def test_run_forever(event_loop, test_consumer_with_abort):
         nonlocal acknowledgement_called
         acknowledgement_called = True
 
-    @app.application_teardown
+    @app.teardown
     @asyncio.coroutine
     def teardown(app):
         nonlocal teardown_called

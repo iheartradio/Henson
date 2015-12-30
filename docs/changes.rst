@@ -8,6 +8,10 @@ Released TBD
 
 - Use ``asyncio`` to process messages asynchronously (*Backwards Incompatible*)
 - Add ``Abort`` to allow for a coroutine to cancel processing of a message
+- Add support for application ``startup`` and ``teardown`` callbacks
+- Add support for ``message_acknowledgement`` callbacks to acknowledge incoming
+  messages
+- Update callback register names (*Backwards Incompatible*)
 
 Version 0.4.0
 -------------
