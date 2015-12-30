@@ -74,6 +74,41 @@ def test_error_callback_not_coroutine_typeerror(error_callback, coroutine):
         app.error_callback(error_callback)
 
 
+@pytest.mark.parametrize('acknowledgement', (None, '', False, 10, sum))
+def test_message_acknowledgement_not_coroutine_typeerror(acknowledgement):
+    """Test TypeError is raised if acknowledgement isn't a coroutine."""
+    app = Application('testing')
+    with pytest.raises(TypeError):
+        app.message_acknowledgement(acknowledgement)
+
+
+def test_message_acknowledgement_original_message(event_loop, coroutine,
+                                                  cancelled_future, queue):
+    """Test that original message is acknowledged."""
+    actual = ''
+
+    expected = 'original'
+    queue.put_nowait(expected)
+
+    @asyncio.coroutine
+    def preprocess(app, message):
+        return 'changed'
+
+    @asyncio.coroutine
+    def acknowledge(app, message):
+        nonlocal actual
+        actual = message
+
+    app = Application('testing', callback=coroutine)
+
+    app.message_preprocessor(preprocess)
+    app.message_acknowledgement(acknowledge)
+
+    event_loop.run_until_complete(app._process(cancelled_future, queue))
+
+    assert actual == expected
+
+
 @pytest.mark.parametrize('preprocess', (None, '', False, 10, sum))
 def test_message_preprocessor_not_coroutine_typeerror(preprocess, coroutine):
     """Test TypeError is raised if preprocessor isn't a coroutine."""
@@ -144,6 +179,7 @@ def test_run_forever(event_loop, test_consumer_with_abort):
     preprocess_called = False
     callback_called = False
     postprocess_called = False
+    acknowledgement_called = False
     teardown_called = False
 
     @asyncio.coroutine
@@ -169,6 +205,11 @@ def test_run_forever(event_loop, test_consumer_with_abort):
         postprocess_called = True
 
     @asyncio.coroutine
+    def acknowledge(app, message):
+        nonlocal acknowledgement_called
+        acknowledgement_called = True
+
+    @asyncio.coroutine
     def teardown(app):
         nonlocal teardown_called
         teardown_called = True
@@ -182,6 +223,7 @@ def test_run_forever(event_loop, test_consumer_with_abort):
     app.application_startup(startup)
     app.message_preprocessor(preprocess)
     app.result_postprocessor(postprocess)
+    app.message_acknowledgement(acknowledge)
     app.application_teardown(teardown)
 
     app.run_forever(loop=event_loop)
@@ -190,4 +232,5 @@ def test_run_forever(event_loop, test_consumer_with_abort):
     assert preprocess_called
     assert callback_called
     assert postprocess_called
+    assert acknowledgement_called
     assert teardown_called
