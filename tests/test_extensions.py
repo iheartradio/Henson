@@ -43,7 +43,7 @@ def test_extension_with_default_settings(test_app):
 
 
 def test_extension_required_settings_exception(test_app):
-    """Tests that init_app raises REQUIRED_SETTINGS exceptions."""
+    """Test that init_app raises REQUIRED_SETTINGS exceptions."""
     class CustomExtension(Extension):
         REQUIRED_SETTINGS = ('foo', 'bar')
 
@@ -52,7 +52,7 @@ def test_extension_required_settings_exception(test_app):
 
 
 def test_extension_with_required_settings(test_app):
-    """Tests that init_app doesn't raise REQUIRED_SETTINGS exceptions."""
+    """Test that init_app doesn't raise REQUIRED_SETTINGS exceptions."""
     class CustomExtension(Extension):
         REQUIRED_SETTINGS = ('foo', 'bar')
 
