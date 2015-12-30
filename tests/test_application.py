@@ -90,19 +90,18 @@ def test_message_acknowledgement_original_message(event_loop, coroutine,
     expected = 'original'
     queue.put_nowait(expected)
 
+    app = Application('testing', callback=coroutine)
+
+    @app.message_preprocessor
     @asyncio.coroutine
     def preprocess(app, message):
         return 'changed'
 
+    @app.message_acknowledgement
     @asyncio.coroutine
     def acknowledge(app, message):
         nonlocal actual
         actual = message
-
-    app = Application('testing', callback=coroutine)
-
-    app.message_preprocessor(preprocess)
-    app.message_acknowledgement(acknowledge)
 
     event_loop.run_until_complete(app._process(cancelled_future, queue))
 
@@ -124,12 +123,16 @@ def test_postprocess_results(original, expected):
     callback1_called = False
     callback2_called = False
 
+    app = Application('testing')
+
+    @app.result_postprocessor
     @asyncio.coroutine
     def callback1(app, message):
         nonlocal callback1_called
         callback1_called = True
         return message + 1
 
+    @app.result_postprocessor
     @asyncio.coroutine
     def callback2(app, message):
         nonlocal callback2_called
@@ -137,11 +140,6 @@ def test_postprocess_results(original, expected):
         # Nothing is returned out of Application._postprocess_results so
         # the assertion needs to happen inside a callback.
         assert message == expected
-
-    app = Application('testing')
-
-    app.result_postprocessor(callback1)
-    app.result_postprocessor(callback2)
 
     yield from app._postprocess_results([original])
 
@@ -183,36 +181,10 @@ def test_run_forever(event_loop, test_consumer_with_abort):
     teardown_called = False
 
     @asyncio.coroutine
-    def startup(app):
-        nonlocal startup_called
-        startup_called = True
-
-    @asyncio.coroutine
-    def preprocess(app, message):
-        nonlocal preprocess_called
-        preprocess_called = True
-        return message + 1
-
-    @asyncio.coroutine
     def callback(app, message):
         nonlocal callback_called
         callback_called = True
         return [message + 1]
-
-    @asyncio.coroutine
-    def postprocess(app, result):
-        nonlocal postprocess_called
-        postprocess_called = True
-
-    @asyncio.coroutine
-    def acknowledge(app, message):
-        nonlocal acknowledgement_called
-        acknowledgement_called = True
-
-    @asyncio.coroutine
-    def teardown(app):
-        nonlocal teardown_called
-        teardown_called = True
 
     app = Application(
         'testing',
@@ -220,11 +192,36 @@ def test_run_forever(event_loop, test_consumer_with_abort):
         callback=callback,
     )
 
-    app.application_startup(startup)
-    app.message_preprocessor(preprocess)
-    app.result_postprocessor(postprocess)
-    app.message_acknowledgement(acknowledge)
-    app.application_teardown(teardown)
+    @app.application_startup
+    @asyncio.coroutine
+    def startup(app):
+        nonlocal startup_called
+        startup_called = True
+
+    @app.message_preprocessor
+    @asyncio.coroutine
+    def preprocess(app, message):
+        nonlocal preprocess_called
+        preprocess_called = True
+        return message + 1
+
+    @app.result_postprocessor
+    @asyncio.coroutine
+    def postprocess(app, result):
+        nonlocal postprocess_called
+        postprocess_called = True
+
+    @app.message_acknowledgement
+    @asyncio.coroutine
+    def acknowledge(app, message):
+        nonlocal acknowledgement_called
+        acknowledgement_called = True
+
+    @app.application_teardown
+    @asyncio.coroutine
+    def teardown(app):
+        nonlocal teardown_called
+        teardown_called = True
 
     app.run_forever(loop=event_loop)
 
