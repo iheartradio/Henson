@@ -1,4 +1,4 @@
-"""Test the application registry."""
+"""Test configuration."""
 
 import asyncio
 
@@ -22,7 +22,8 @@ class MockApplication(Application):
 
         self.error_callbacks = []
 
-    def run_forever(self, num_workers=1):
+    def run_forever(self, num_workers=1, loop=None):
+        """Run the instance."""
         print('Run, Forrest, run!')
 
 
