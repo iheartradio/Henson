@@ -1,18 +1,12 @@
 """Test for henson.contrib.retry."""
 
+import asyncio
 import time
 
 import pytest
 
 from henson.contrib import retry
-
-
-@pytest.fixture
-def callback():
-    """Return a stubbed callback function."""
-    def _inner(*args):
-        pass
-    return _inner
+from henson.exceptions import Abort
 
 
 @pytest.mark.parametrize('number_of_retries, threshold, expected', [
@@ -50,65 +44,69 @@ def test_exceeded_timeout(offset, duration, expected):
     assert actual == expected
 
 
-def test_callback_insertion(test_app, callback):
+def test_callback_insertion(test_app, coroutine):
     """Test that the callback is properly registered."""
     # Add an error callback before registering Retry.
+    @test_app.error_callback
+    @asyncio.coroutine
     def original_callback(*args):
         pass
-    test_app.error_callbacks.append(original_callback)
 
     # Register Retry.
-    test_app.settings['RETRY_CALLBACK'] = callback
+    test_app.settings['RETRY_CALLBACK'] = coroutine
     retry.Retry(test_app)
 
-    assert test_app.error_callbacks[0] is retry._retry
+    assert test_app._callbacks['error_callbacks'][0] is retry._retry
 
 
-def test_callback_exceeds_threshold(test_app, callback):
+@pytest.mark.asyncio
+def test_callback_exceeds_threshold(test_app, coroutine):
     """Test that callback doesn't run when the threshold is exceeded."""
     # Create a function that sets a flag indicating it's been called.
     original_callback_called = False
 
+    @test_app.error_callback
+    @asyncio.coroutine
     def original_callback(*args):
         nonlocal original_callback_called
         original_callback_called = True
 
-    test_app.error_callbacks.append(original_callback)
-
-    test_app.settings['RETRY_CALLBACK'] = callback
+    test_app.settings['RETRY_CALLBACK'] = coroutine
     test_app.settings['RETRY_THRESHOLD'] = 0
 
-    for cb in test_app.error_callbacks:
-        cb(test_app, {}, retry.RetryableException())
+    for cb in test_app._callbacks['error_callbacks']:
+        yield from cb(test_app, {}, retry.RetryableException())
 
     assert original_callback_called
 
 
-def test_callback_exceeds_timeout(test_app, callback):
+@pytest.mark.asyncio
+def test_callback_exceeds_timeout(test_app, coroutine):
     """Test that callback doesn't run when the timeout is exceeded."""
     # Create a function that sets a flag indicating it's been called.
     original_callback_called = False
 
+    @test_app.error_callback
+    @asyncio.coroutine
     def original_callback(*args):
         nonlocal original_callback_called
         original_callback_called = True
 
-    test_app.error_callbacks.append(original_callback)
-
-    test_app.settings['RETRY_CALLBACK'] = callback
+    test_app.settings['RETRY_CALLBACK'] = coroutine
     test_app.settings['RETRY_TIMEOUT'] = 0
 
-    for cb in test_app.error_callbacks:
-        cb(test_app, {}, retry.RetryableException())
+    for cb in test_app._callbacks['error_callbacks']:
+        yield from cb(test_app, {}, retry.RetryableException())
 
     assert original_callback_called
 
 
-def test_callback_prevents_others(test_app, callback):
+@pytest.mark.asyncio
+def test_callback_prevents_others(test_app, coroutine):
     """Test that the callback blocks other callbacks."""
-    test_app.settings['RETRY_CALLBACK'] = callback
+    test_app.settings['RETRY_CALLBACK'] = coroutine
     retry.Retry(test_app)
 
-    with pytest.raises(StopIteration):
-        for cb in test_app.error_callbacks:
-            cb(test_app, {}, retry.RetryableException())
+    with pytest.raises(Abort):
+        for cb in test_app._callbacks['error_callbacks']:
+            yield from cb(test_app, {}, retry.RetryableException())

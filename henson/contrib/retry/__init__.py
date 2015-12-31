@@ -6,8 +6,10 @@ messages that fail to process.
 .. versionadded:: 0.4.0
 """
 
+import asyncio
 import time
 
+from henson.exceptions import Abort
 from henson.extensions import Extension
 
 __all__ = ('Retry', 'RetryableException')
@@ -51,6 +53,7 @@ def _exceeded_timeout(start_time, duration):
     return start_time + (duration * 1000) <= int(time.time())
 
 
+@asyncio.coroutine
 def _retry(app, message, exc):
     """Retry the message.
 
@@ -65,7 +68,7 @@ def _retry(app, message, exc):
             message to fail.
 
     Raises:
-        StopIteration: If the message is scheduled to be retried.
+        Abort: If the message is scheduled to be retried.
     """
     if not isinstance(exc, app.settings['RETRY_EXCEPTIONS']):
         # If the exception raised isn't retryable, return control so the
@@ -91,11 +94,11 @@ def _retry(app, message, exc):
 
     # TODO: Incorporate delay and backoff.
     # Retry the message.
-    app.settings['RETRY_CALLBACK'](app, message)
+    yield from app.settings['RETRY_CALLBACK'](app, message)
 
     # If the exception was retryable, none of the other callbacks should
     # execute.
-    raise StopIteration
+    raise Abort('message.retried', message)
 
 
 def _retry_info(message):
@@ -141,10 +144,10 @@ class Retry(Extension):
         """
         super().init_app(app)
 
-        if not callable(app.settings['RETRY_CALLBACK']):
-            raise TypeError('The retry callback is not callable.')
+        if not asyncio.iscoroutinefunction(app.settings['RETRY_CALLBACK']):
+            raise TypeError('The retry callback is not a coroutine.')
 
         # The retry callback should be executed before all other
         # callbacks. This will ensure that retryable exceptions are
         # retried.
-        app.error_callbacks.insert(0, _retry)
+        app._callbacks['error_callbacks'].insert(0, _retry)

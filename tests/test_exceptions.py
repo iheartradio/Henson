@@ -86,6 +86,45 @@ def test_abort_callback(event_loop, cancelled_future, queue):
     assert not postprocess_called
 
 
+def test_abort_error(event_loop, cancelled_future, queue):
+    """Test that aborted error callbacks stop execution."""
+    # This test sets up a callback and two error callbacks. The callback
+    # will raise an exception and the first error callback will an raise
+    # Abort exception. The second error callback shouldn't be called.
+    callback_called = False
+    error1_called = False
+    error2_called = False
+
+    queue.put_nowait({'a': 1})
+
+    @asyncio.coroutine
+    def callback(app, message):
+        nonlocal callback_called
+        callback_called = True
+        raise TypeError('testing')
+
+    app = Application('testing', callback=callback)
+
+    @app.error_callback
+    @asyncio.coroutine
+    def error1(app, message, exc):
+        nonlocal error1_called
+        error1_called = True
+        raise exceptions.Abort('testing', message)
+
+    @app.error_callback
+    @asyncio.coroutine
+    def error2(app, message, exc):
+        nonlocal error2_called
+        error2_called = True
+
+    event_loop.run_until_complete(app._process(cancelled_future, queue))
+
+    assert callback_called
+    assert error1_called
+    assert not error2_called
+
+
 def test_abort_postprocess(event_loop, cancelled_future, queue):
     """Test that aborted postprocessors stop execution of the result."""
     # This test sets up a callback and two postprocessors. The first

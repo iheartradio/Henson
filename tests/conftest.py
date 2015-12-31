@@ -17,10 +17,8 @@ class MockApplication(Application):
 
     def __init__(self, **settings):
         """Initialize the instance."""
-        self.name = 'testing'
+        super().__init__('testing')
         self.settings = settings
-
-        self.error_callbacks = []
 
     def run_forever(self, num_workers=1, loop=None):
         """Run the instance."""
