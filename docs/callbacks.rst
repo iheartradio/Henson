@@ -15,7 +15,7 @@ processing the message as an iterable.
 .. code::
 
     async def callback(application, message):
-        yield 'spam'
+        return ['spam']
 
     Application('name', callback=callback)
 
