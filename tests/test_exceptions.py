@@ -105,14 +105,14 @@ def test_abort_error(event_loop, cancelled_future, queue):
 
     app = Application('testing', callback=callback)
 
-    @app.error_callback
+    @app.error
     @asyncio.coroutine
     def error1(app, message, exc):
         nonlocal error1_called
         error1_called = True
         raise exceptions.Abort('testing', message)
 
-    @app.error_callback
+    @app.error
     @asyncio.coroutine
     def error2(app, message, exc):
         nonlocal error2_called

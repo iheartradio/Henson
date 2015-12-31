@@ -47,7 +47,7 @@ def test_exceeded_timeout(offset, duration, expected):
 def test_callback_insertion(test_app, coroutine):
     """Test that the callback is properly registered."""
     # Add an error callback before registering Retry.
-    @test_app.error_callback
+    @test_app.error
     @asyncio.coroutine
     def original_callback(*args):
         pass
@@ -56,7 +56,7 @@ def test_callback_insertion(test_app, coroutine):
     test_app.settings['RETRY_CALLBACK'] = coroutine
     retry.Retry(test_app)
 
-    assert test_app._callbacks['error_callbacks'][0] is retry._retry
+    assert test_app._callbacks['error'][0] is retry._retry
 
 
 @pytest.mark.asyncio
@@ -65,7 +65,7 @@ def test_callback_exceeds_threshold(test_app, coroutine):
     # Create a function that sets a flag indicating it's been called.
     original_callback_called = False
 
-    @test_app.error_callback
+    @test_app.error
     @asyncio.coroutine
     def original_callback(*args):
         nonlocal original_callback_called
@@ -74,7 +74,7 @@ def test_callback_exceeds_threshold(test_app, coroutine):
     test_app.settings['RETRY_CALLBACK'] = coroutine
     test_app.settings['RETRY_THRESHOLD'] = 0
 
-    for cb in test_app._callbacks['error_callbacks']:
+    for cb in test_app._callbacks['error']:
         yield from cb(test_app, {}, retry.RetryableException())
 
     assert original_callback_called
@@ -86,7 +86,7 @@ def test_callback_exceeds_timeout(test_app, coroutine):
     # Create a function that sets a flag indicating it's been called.
     original_callback_called = False
 
-    @test_app.error_callback
+    @test_app.error
     @asyncio.coroutine
     def original_callback(*args):
         nonlocal original_callback_called
@@ -95,7 +95,7 @@ def test_callback_exceeds_timeout(test_app, coroutine):
     test_app.settings['RETRY_CALLBACK'] = coroutine
     test_app.settings['RETRY_TIMEOUT'] = 0
 
-    for cb in test_app._callbacks['error_callbacks']:
+    for cb in test_app._callbacks['error']:
         yield from cb(test_app, {}, retry.RetryableException())
 
     assert original_callback_called
@@ -108,5 +108,5 @@ def test_callback_prevents_others(test_app, coroutine):
     retry.Retry(test_app)
 
     with pytest.raises(Abort):
-        for cb in test_app._callbacks['error_callbacks']:
+        for cb in test_app._callbacks['error']:
             yield from cb(test_app, {}, retry.RetryableException())

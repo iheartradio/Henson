@@ -150,4 +150,4 @@ class Retry(Extension):
         # The retry callback should be executed before all other
         # callbacks. This will ensure that retryable exceptions are
         # retried.
-        app._callbacks['error_callbacks'].insert(0, _retry)
+        app._callbacks['error'].insert(0, _retry)
