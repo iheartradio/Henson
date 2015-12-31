@@ -394,16 +394,14 @@ class Application:
             except Abort as e:
                 yield from self._abort(e)
             except Exception as e:
-                self.logger.error('message.failed', extra={
-                    'exc_info': sys.exc_info(),
-                })
+                self.logger.error('message.failed', exc_info=sys.exc_info())
 
                 for callback in self._callbacks['error_callbacks']:
                     # Any callback can prevent execution of further
-                    # callbacks by raising StopIteration.
+                    # callbacks by raising Abort.
                     try:
                         yield from callback(self, message, e)
-                    except StopIteration:
+                    except Abort:
                         break
             else:
                 yield from self._postprocess_results(results)

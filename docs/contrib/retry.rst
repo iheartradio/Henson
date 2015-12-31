@@ -13,7 +13,8 @@ that fail to process.
    prevent other callbacks from running.
 
    If you have an error callback that you want to run even when retrying a
-   message, make sure you register it *after* initializing Retry.
+   message, you will need to manually inject it into the list of error
+   callbacks *after* initializing Retry.
 
 Configuration
 =============
@@ -29,8 +30,8 @@ literally insane).
 |                  | increase between each subsequent retry. Defaults to      |
 |                  | False.                                                   |
 +------------------+----------------------------------------------------------+
-| RETRY_CALLBACK   | A callable that encapsulates the functionality needed to |
-|                  | retry the message. If no value is provided, a            |
+| RETRY_CALLBACK   | A coroutine that encapsulates the functionality needed   |
+|                  | to retry the message. If no value is provided, a         |
 |                  | ``TypeError`` will be raised.                            |
 +------------------+----------------------------------------------------------+
 | RETRY_EXCEPTIONS | An exception or tuple of exceptions that will cause      |
@@ -60,7 +61,7 @@ Application definition::
     from henson import Application
     from henson.contrib.retry import Retry
 
-    def print_message(app, message):
+    async def print_message(app, message):
         print(message)
 
     app = Application('retryable-application', callback=my_callback)
@@ -71,7 +72,7 @@ Somwhere inside the application::
 
    from henson.contrib.retry import RetryableException
 
-   def my_callback(app, message):
+   async def my_callback(app, message):
        raise RetryableException
 
 API
