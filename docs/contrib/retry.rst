@@ -26,9 +26,10 @@ retrying the message. By default, Henson will try forever (yes, this is
 literally insane).
 
 +------------------+----------------------------------------------------------+
-| RETRY_BACKOFF    | If set to True, the delay between retry attempts will    |
-|                  | increase between each subsequent retry. Defaults to      |
-|                  | False.                                                   |
+| RETRY_BACKOFF    | A number that, if provided, will be used in conjunction  |
+|                  | with the number of retry attempts already made to        |
+|                  | calculate the total delay for the current retry.         |
+|                  | Defaults to 1.                                           |
 +------------------+----------------------------------------------------------+
 | RETRY_CALLBACK   | A coroutine that encapsulates the functionality needed   |
 |                  | to retry the message. If no value is provided, a         |
@@ -39,8 +40,8 @@ literally insane).
 |                  | `RetryableException`.                                    |
 +------------------+----------------------------------------------------------+
 | RETRY_DELAY      | The number of seconds to wait before scheduling a retry. |
-|                  | If ``RETRY_BACKOFF`` is set to True, the delay will      |
-|                  | increase between each retry. Defaults to 0.              |
+|                  | If ``RETRY_BACKOFF`` has a value greater than 1, the     |
+|                  | delay will increase between each retry. Defaults to 0.   |
 +------------------+----------------------------------------------------------+
 | RETRY_THRESHOLD  | The maximum number of times that a Henson application    |
 |                  | will try to process a message before marking it as a     |

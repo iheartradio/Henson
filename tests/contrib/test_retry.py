@@ -1,12 +1,30 @@
 """Test for henson.contrib.retry."""
 
 import asyncio
+from contextlib import suppress
 import time
 
 import pytest
 
 from henson.contrib import retry
 from henson.exceptions import Abort
+
+
+@pytest.mark.parametrize('delay, backoff, count, expected', (
+    (1, 1, 0, 1),
+    (1, 1, 1, 1),
+    (1, 1, 4, 1),
+    (1, 2, 0, 1),
+    (1, 2, 1, 2),
+    (1, 2, 4, 16),
+    (10, 1.5, 0, 10),
+    (10, 1.5, 1, 15),
+    (10, 1.5, 4, 50.625),
+))
+def test_calculate_delay(delay, backoff, count, expected):
+    """Test _calculcate_delay."""
+    actual = retry._calculate_delay(delay, backoff, count)
+    assert actual == expected
 
 
 @pytest.mark.parametrize('number_of_retries, threshold, expected', [
@@ -110,3 +128,25 @@ def test_callback_prevents_others(test_app, coroutine):
     with pytest.raises(Abort):
         for cb in test_app._callbacks['error']:
             yield from cb(test_app, {}, retry.RetryableException())
+
+
+@pytest.mark.asyncio
+def test_delay(monkeypatch, test_app, coroutine):
+    """Test that retry delays."""
+    sleep_called = False
+
+    test_app.settings['RETRY_CALLBACK'] = coroutine
+    test_app.settings['RETRY_DELAY'] = 1
+    retry.Retry(test_app)
+
+    @asyncio.coroutine
+    def sleep(duration):
+        nonlocal sleep_called
+        sleep_called = True
+
+    monkeypatch.setattr(asyncio, 'sleep', sleep)
+
+    with suppress(Abort):
+        yield from retry._retry(test_app, {}, retry.RetryableException())
+
+    assert sleep_called

@@ -15,6 +15,24 @@ from henson.extensions import Extension
 __all__ = ('Retry', 'RetryableException')
 
 
+def _calculate_delay(delay, backoff, number_of_retries):
+    """Return the time to wait before retrying.
+
+    Args:
+        delay (numbers.Number): The base amount of time, in seconds, by
+            which to delay the retry.
+        backoff (numbers.Number): The factor by which each retry should
+            be extended.
+        number_of_retries (int): The number of retry attempts already
+            made.
+
+    Returns:
+        numbers.Number: The amount of time to wait.
+    """
+    backoff_factor = backoff ** number_of_retries
+    return delay * backoff_factor
+
+
 def _exceeded_threshold(number_of_retries, maximum_retries):
     """Return True if the number of retries has been exceeded.
 
@@ -89,11 +107,21 @@ def _retry(app, message, exc):
         # again.
         return
 
+    if app.settings['RETRY_DELAY']:
+        # If a delay has been specified, calculate the actual delay
+        # based on any backoff and then sleep for that long. Add the
+        # delay time to the retry information so that it can be used
+        # to gain insight into the full history of a retried message.
+        retry_info['delay'] = _calculate_delay(
+            delay=app.settings['RETRY_DELAY'],
+            backoff=app.settings['RETRY_BACKOFF'],
+            number_of_retries=retry_info['count'],
+        )
+        yield from asyncio.sleep(retry_info['delay'])
+
+    # Update the retry information and retry the message.
     retry_info['count'] += 1
     message['_retry'] = retry_info
-
-    # TODO: Incorporate delay and backoff.
-    # Retry the message.
     yield from app.settings['RETRY_CALLBACK'](app, message)
 
     # If the exception was retryable, none of the other callbacks should
@@ -124,7 +152,7 @@ class Retry(Extension):
     """A class that adds retries to an application."""
 
     DEFAULT_SETTINGS = {
-        'RETRY_BACKOFF': False,
+        'RETRY_BACKOFF': 1,
         'RETRY_DELAY': 0,
         'RETRY_EXCEPTIONS': RetryableException,
         'RETRY_THRESHOLD': None,
@@ -141,8 +169,18 @@ class Retry(Extension):
         Args:
             app (henson.base.Application): Application instance to be
                 initialized.
+
+        Raises:
+            TypeError: If the callback isn't a coroutine.
+            ValueError: If the delay or backoff is negative.
         """
         super().init_app(app)
+
+        if app.settings['RETRY_DELAY'] < 0:
+            raise ValueError('The delay cannot be negative.')
+
+        if app.settings['RETRY_BACKOFF'] < 0:
+            raise ValueError('The backoff cannot be negative.')
 
         if not asyncio.iscoroutinefunction(app.settings['RETRY_CALLBACK']):
             raise TypeError('The retry callback is not a coroutine.')
