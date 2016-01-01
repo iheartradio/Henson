@@ -55,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Henson'
-copyright = '2015, iHeartRadio'
+copyright = '2015-2016, iHeartRadio'
 author = 'iHeartRadio'
 
 # The version info for the project you're documenting, acts as replacement for
