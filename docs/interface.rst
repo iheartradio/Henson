@@ -12,17 +12,26 @@ Below is a sample implementation.
     import asyncio
 
     class FileConsumer:
-        """Read files from a file."""
+        """Read lines from a file."""
 
         def __init__(self, filename):
             self.filename = filename
+            self._file = None
 
         def __iter__(self):
-            """Return a generator that yields lines from the file."""
-            with open(self.filename) as f:
-                yield from f
+            """FileConsumer objects are iterators."""
+            return self
 
-        @asyncio.coroutine
-        def read(self):
+        def __next__(self):
+            """Return the next line of the file, if available."""
+            if not self._file:
+                self._file = open(self.filename)
+            try:
+                return next(self._file)
+            except StopIteration:
+                self._file.close()
+                raise Abort('Reached end of file', None)
+
+        async def read(self):
             """Return the next line in the file."""
             return next(self)
