@@ -60,8 +60,8 @@ class Extension:
         required settings.
 
         Args:
-            app (Optional[henson.base.Application]): An application
-                instance that will be initialized.
+            app (henson.base.Application): An application instance that
+                will be initialized.
         """
         for key, value in self.DEFAULT_SETTINGS.items():
             app.settings.setdefault(key, value)

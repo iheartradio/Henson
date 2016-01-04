@@ -58,6 +58,5 @@ Available Extensions
 ====================
 
 * `Henson-Database <https://github.com/iheartradio/Henson-Database>`_
-* `Henson-Kafka <https://github.com/iheartradio/Henson-Kafka>`_
 * `Henson-Logging <https://github.com/iheartradio/Henson-Logging>`_
 * `Henson-SQS <https://github.com/iheartradio/Henson-SQS>`_
