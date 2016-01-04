@@ -2,8 +2,8 @@
 Callbacks
 =========
 
-Henson operates on messages through a series of callbacks. Each serves a unique
-purpose.
+Henson operates on messages through a series of :func:`asyncio.coroutine`
+callbacks. Each serves a unique purpose.
 
 ``callback``
 ============
