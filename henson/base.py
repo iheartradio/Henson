@@ -353,6 +353,11 @@ class Application:
                 self.logger.info('consumer.aborted')
                 future.cancel()
                 return
+            except Exception as e:
+                # If the consumer fails, set the exception on the future
+                # so that the loop will stop running and the application
+                # will shut down.
+                future.set_exception(e)
             else:
                 yield from queue.put(value)
 

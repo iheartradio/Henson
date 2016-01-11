@@ -51,6 +51,30 @@ def test_consume(event_loop, test_consumer, cancelled_future):
     assert queue.qsize() == 1
 
 
+def test_consumer_exception(event_loop):
+    """Test that the application stops after a consumer exception."""
+    consumer_called = False
+    callback_called = False
+
+    class Consumer:
+        @asyncio.coroutine
+        def read(self):
+            nonlocal consumer_called
+            consumer_called = True
+            raise Exception()
+
+    @asyncio.coroutine
+    def callback(app, message):
+        nonlocal callback_called
+        callback_called = True
+
+    app = Application('testing', consumer=Consumer(), callback=callback)
+    app.run_forever(loop=event_loop)
+
+    assert consumer_called
+    assert not callback_called
+
+
 def test_consumer_is_none_typeerror():
     """Test TypeError is raised if the consumer is None."""
     app = Application('testing', consumer=None)
