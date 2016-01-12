@@ -114,6 +114,9 @@ detected::
 
 .. note:: The ``--reloader`` option is not recommended for production use.
 
+It's also possible to enable Henson's `debug mode`_ through the ``--debug``
+option.
+
 Logging
 =======
 
@@ -122,6 +125,22 @@ Henson applications provide a default logger. The logger returned by calling
 used to specify which logger to use. Any configuration needed should (e.g.,
 :func:`logging.basicConfig`, :func:`logging.config.dictConfig`) should be done
 before the application is started.
+
+.. _debug mode:
+
+Debug Mode
+==========
+
+Debugging with asyncio can be tricky. Henson provides a debug mode that will
+enable asyncio's debug mode as well as enable debugging information through
+Henson's logger.
+
+Debug mode can be enabled through a configuration setting::
+
+    app.settings['DEBUG'] = True
+
+or by providing a value for ``debug`` when calling
+:meth:`~henson.base.Application.run_forever`.
 
 Contents:
 

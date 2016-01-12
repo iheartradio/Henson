@@ -15,7 +15,7 @@ from . import __version__
 from .base import Application
 
 
-def run(application_path, reloader=False, workers=1):
+def run(application_path, reloader=False, workers=1, debug=False):
     """Import and run an application.
 
     Args:
@@ -27,6 +27,8 @@ def run(application_path, reloader=False, workers=1):
             Defaults to False.
         workers (Optional[int]): How many async workers the application
             should use to process messages. Defaults to 1.
+        debug (Optional[bool]): Whether or not to run the application
+            with debug mode enabled. Defaults to False.
     """
     # Add the present working directory to the import path so that
     # services can be found without installing them to site-packages

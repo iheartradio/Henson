@@ -53,6 +53,7 @@ class Application:
         # Configuration
         self.settings = Config()
         self.settings.from_object(settings or {})
+        self.settings.setdefault('DEBUG', False)
         self.settings.setdefault('SLEEP_TIME', 0.1)
 
         # Callbacks
@@ -155,7 +156,7 @@ class Application:
         self._register_callback(callback, 'result_postprocessor')
         return callback
 
-    def run_forever(self, num_workers=1, loop=None):
+    def run_forever(self, num_workers=1, loop=None, debug=False):
         """Consume from the consumer until interrupted.
 
         Args:
@@ -166,6 +167,8 @@ class Application:
                 loop that, if provided, will be used for running the
                 application. If none is provided, the default event loop
                 will be used.
+            debug (Optional[bool]): Whether or not to run with debug
+                mode enabled. Defaults to True.
 
         Raises:
             TypeError: If the consumer is None or the callback isn't a
@@ -193,6 +196,20 @@ class Application:
         ]
         future = asyncio.gather(*tasks, loop=loop)
         loop.run_until_complete(future)
+
+        # The following debug mode checks are intentionally separate.
+        # Using a check of `if debug or self.settings['DEBUG']` would
+        # accomplish the same thing but wouldn't respect the
+        # PYTHONASYNCIODEBUG environment variable.
+        if debug:
+            # Set the application's debug mode to true if run_forever
+            # was called with debug enabled.
+            self.settings['DEBUG'] = True
+        if self.settings['DEBUG']:
+            # If the application is running in debug mode, enable it for
+            # the loop and set the logger to DEBUG.
+            loop.set_debug(True)
+            self.logger.setLevel(logging.DEBUG)
 
         self.logger.info('application.started')
 
