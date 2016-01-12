@@ -2,6 +2,11 @@
 Henson
 ######
 
+.. image:: docs/_static/logo.png
+   :width: 400
+   :height: 400
+   :align: center
+
 A framework for running a Python service driven by a consumer.
 
 .. code::
