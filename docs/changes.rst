@@ -12,6 +12,8 @@ Released TBD
 - Add support for ``message_acknowledgement`` callbacks to acknowledge incoming
   messages
 - Update callback register names (*Backwards Incompatible*)
+- Add debug mode, available through ``--debug`` on the command line, the
+  `DEBUG` setting, and as an argument to ``Application.run_forever``
 
 Version 0.4.0
 -------------
