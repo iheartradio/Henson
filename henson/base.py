@@ -320,7 +320,7 @@ class Application:
         stack = traceback.extract_tb(tb, 1)[-1]
         self.logger.info('callback.aborted', extra={
             'exception': exc,
-            'message': exc.message,
+            'exception_message': exc.message,
             'aborted_by': stack,
         })
 
