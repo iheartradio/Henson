@@ -188,6 +188,7 @@ class Application:
 
         # Use the specified event loop, otherwise use the default one.
         loop = loop or asyncio.get_event_loop()
+        asyncio.set_event_loop(loop)
 
         # Start the application.
         tasks = [
@@ -220,7 +221,7 @@ class Application:
 
         # Create a future to control consumption and create a task for
         # the consumer to run in.
-        consumer = asyncio.Future()
+        consumer = asyncio.Future(loop=loop)
         loop.create_task(self._consume(queue, consumer))
 
         # Create tasks to process each message received by the
@@ -228,7 +229,7 @@ class Application:
         # running it should be restarted and wait until the future is
         # done.
         tasks = [
-            asyncio.async(self._process(consumer, queue), loop=loop)
+            asyncio.async(self._process(consumer, queue, loop), loop=loop)
             for _ in range(num_workers)
         ]
         future = asyncio.gather(*tasks, loop=loop)
@@ -256,10 +257,10 @@ class Application:
 
             # Teardown
             tasks = [
-                asyncio.async(callback(self)) for callback in
+                asyncio.async(callback(self), loop=loop) for callback in
                 self._callbacks['teardown']
             ]
-            future = asyncio.gather(*tasks)
+            future = asyncio.gather(*tasks, loop=loop)
             loop.run_until_complete(future)
 
             # Clean up after ourselves.
@@ -379,7 +380,7 @@ class Application:
                 yield from queue.put(value)
 
     @asyncio.coroutine
-    def _process(self, task, queue):
+    def _process(self, task, queue, loop):
         """Process incoming messages.
 
         Args:
@@ -387,6 +388,8 @@ class Application:
               The function will exit when it's been cancelled.
             queue (asyncio.Queue): A queue containing incoming messages
               to be processed.
+            loop (asyncio.asyncio.BaseEventLoop): The event loop used by
+                the application.
 
         .. versionadded:: 0.5.0
         """
@@ -399,7 +402,8 @@ class Application:
                 if task.done():
                     break
 
-                yield from asyncio.sleep(self.settings['SLEEP_TIME'])
+                yield from asyncio.sleep(
+                    self.settings['SLEEP_TIME'], loop=loop)
                 continue
 
             message = yield from queue.get()
@@ -485,7 +489,7 @@ class Application:
     def _teardown(self, future, loop):
         """Tear down the application."""
         tasks = [
-            asyncio.async(callback(self)) for callback in
+            asyncio.async(callback(self), loop=loop) for callback in
             self._callbacks['teardown']]
-        future = asyncio.gather(*tasks)
+        future = asyncio.gather(*tasks, loop=loop)
         loop.run_until_complete(future)

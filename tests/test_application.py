@@ -127,7 +127,8 @@ def test_message_acknowledgement_original_message(event_loop, coroutine,
         nonlocal actual
         actual = message
 
-    event_loop.run_until_complete(app._process(cancelled_future, queue))
+    event_loop.run_until_complete(
+        app._process(cancelled_future, queue, event_loop))
 
     assert actual == expected
 
