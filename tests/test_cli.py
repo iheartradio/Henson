@@ -108,3 +108,11 @@ def test_run_forever(good_mock_service, capsys):
     run('good_import:app')
     out, _ = capsys.readouterr()
     assert 'Run, Forrest, run!' in out
+
+
+def test_run_with_reloader(good_mock_service, capsys):
+    """Test that an app can be selected automatically."""
+    run('good_import', reloader=True)
+    out, _ = capsys.readouterr()
+    assert 'Running good_import.app with reloader' in out
+    assert 'Run, Forrest, run!' in out

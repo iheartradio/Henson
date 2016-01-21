@@ -2,6 +2,7 @@
 
 """Collection of Henson CLI tasks."""
 
+import asyncio
 from importlib import find_loader, import_module
 import os
 import sys
@@ -113,9 +114,10 @@ def run(application_path, reloader=False, workers=1, debug=False):
 
         # Create observer and runner threads
         observer = Observer()
+        loop = asyncio.new_event_loop()
         runner = Thread(
             target=app.run_forever,
-            kwargs={'num_workers': workers},
+            kwargs={'num_workers': workers, 'loop': loop},
         )
 
         # This function is called by watchdog event handler when changes
