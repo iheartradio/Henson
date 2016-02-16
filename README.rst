@@ -1,6 +1,9 @@
-######
-Henson
-######
+#####################
+Henson |build status|
+#####################
+
+.. |build status| image:: https://travis-ci.org/iheartradio/Henson.svg?branch=master
+   :target: https://travis-ci.org/iheartradio/Henson
 
 .. image:: docs/_static/logo.png
    :width: 400
