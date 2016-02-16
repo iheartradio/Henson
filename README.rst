@@ -12,7 +12,7 @@ Henson |build status|
 
 A framework for running a Python service driven by a consumer.
 
-.. code::
+.. code:: python
 
     from itertools import count
 
