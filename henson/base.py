@@ -451,10 +451,6 @@ class Application:
         if results is None:
             return
 
-        # TODO: Evaluate this further. What are the pros and cons of
-        # operating over multiple results versus keeping it just one.
-        # As we look into asyncio, there may be benefits to yielding
-        # from callback rather than returning.
         for result in results:
             try:
                 yield from self._apply_callbacks(
