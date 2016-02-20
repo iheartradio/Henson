@@ -3,7 +3,7 @@ Callbacks
 =========
 
 Henson operates on messages through a series of :func:`asyncio.coroutine`
-callbacks. Each serves a unique purpose.
+callback functions. Each callback type serves a unique purpose.
 
 ``callback``
 ============
@@ -19,11 +19,13 @@ processing the message as an iterable.
 
     Application('name', callback=callback)
 
+.. note:: There can only be one function registered as ``callback``.
+
 ``error``
 ==================
 
-These callbacks are called when an error occurs while trying to read the next
-message from the consumer.
+These callbacks are called when an exception is raised while processing a
+message.
 
 .. code::
 
@@ -33,12 +35,17 @@ message from the consumer.
     async def log_error(application, message, exception):
         logger.error('spam')
 
+.. note::
+
+    Exceptions raised while postprocessing a result will not be processed
+    through these callbacks.
+
 ``message_acknowledgement``
 ===========================
 
-These are callbacks that are intended to acknowledge that a message has been
-received and should not be available to other consumers. They run after a
-message and its result(s) have been fully processed.
+These callbacks are intended to acknowledge that a message has been received
+and should not be made available to other consumers. They run after a message
+and its result(s) have been fully processed.
 
 .. code::
 
@@ -51,8 +58,9 @@ message and its result(s) have been fully processed.
 ``message_preprocessor``
 =========================
 
-These are callbacks that are intended to modify the incoming message before it
-is passed to ``callback`` for processing.
+These callbacks are called as each message is first received. Any modifications
+they make to the message will be reflected in what is passed to ``callback``
+for processing.
 
 .. code::
 
@@ -66,8 +74,8 @@ is passed to ``callback`` for processing.
 ``result_postprocessor``
 =========================
 
-These are callbacks are will operate on the result(s) of ``callback``.  Each
-callback is applied to each result.
+These callbacks will operate on the result(s) of ``callback``. Each callback is
+applied to each result.
 
 .. code::
 
@@ -81,7 +89,7 @@ callback is applied to each result.
 ``startup``
 ===========
 
-These are callbacks that will run when an application is starting.
+These callbacks will run as an application is starting.
 
 .. code::
 
@@ -94,7 +102,7 @@ These are callbacks that will run when an application is starting.
 ``teardown``
 ============
 
-These are callbacks that will run when an application is shutting down.
+These callbacks will run as an application is shutting down.
 
 .. code::
 
