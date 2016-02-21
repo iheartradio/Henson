@@ -45,8 +45,7 @@ Quickstart
 
     import asyncio
 
-    from henson import Application
-    from henson.exceptions import Abort
+    from henson import Abort, Application
 
     class FileConsumer:
         """Read lines from a file."""
