@@ -9,7 +9,7 @@ from .extensions import Extension  # NOQA
 
 try:
     _dist = _pkg_resources.get_distribution(__package__)
-    if not __file__.startswith(_os.path.join(_dist.location, '__package__')):
+    if not __file__.startswith(_os.path.join(_dist.location, __package__)):
         # Manually raise the exception if there is a distribution but
         # it's installed from elsewhere.
         raise _pkg_resources.DistributionNotFound
