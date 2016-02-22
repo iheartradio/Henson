@@ -71,7 +71,7 @@ in what is passed to ``callback`` for processing.
         message['pid'] = os.getpid()
         return message
 
-``result_postprocessor``
+``postprocessor``
 =========================
 
 These callbacks will operate on the result(s) of ``callback``. Each callback is
@@ -81,7 +81,7 @@ applied to each result.
 
     app = Application('name')
 
-    @app.result_postprocessor
+    @app.postprocessor
     async def store_result(application, result):
         with open('/tmp/result', 'w') as f:
             f.write(result)

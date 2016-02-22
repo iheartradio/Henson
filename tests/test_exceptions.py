@@ -40,7 +40,7 @@ def test_abort_middleware(event_loop, cancelled_future, queue):
         middleware2_called = True
         return message
 
-    @app.result_postprocessor
+    @app.postprocessor
     @asyncio.coroutine
     def postprocess(app, result):
         nonlocal postprocess_called
@@ -74,7 +74,7 @@ def test_abort_callback(event_loop, cancelled_future, queue):
 
     app = Application('testing', callback=callback)
 
-    @app.result_postprocessor
+    @app.postprocessor
     @asyncio.coroutine
     def postprocess(app, result):
         nonlocal postprocess_called
@@ -144,7 +144,7 @@ def test_abort_postprocess(event_loop, cancelled_future, queue):
 
     app = Application('testing', callback=callback)
 
-    @app.result_postprocessor
+    @app.postprocessor
     @asyncio.coroutine
     def postprocess1(app, result):
         nonlocal postprocess1_called_count
@@ -153,7 +153,7 @@ def test_abort_postprocess(event_loop, cancelled_future, queue):
             raise exceptions.Abort('testing', result)
         return result
 
-    @app.result_postprocessor
+    @app.postprocessor
     @asyncio.coroutine
     def postprocess2(app, result):
         nonlocal postprocess2_called_count

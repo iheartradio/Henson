@@ -150,14 +150,14 @@ def test_postprocess_results(original, expected):
 
     app = Application('testing')
 
-    @app.result_postprocessor
+    @app.postprocessor
     @asyncio.coroutine
     def callback1(app, message):
         nonlocal callback1_called
         callback1_called = True
         return message + 1
 
-    @app.result_postprocessor
+    @app.postprocessor
     @asyncio.coroutine
     def callback2(app, message):
         nonlocal callback2_called
@@ -173,11 +173,11 @@ def test_postprocess_results(original, expected):
 
 
 @pytest.mark.parametrize('postprocess', (None, '', False, 10, sum))
-def test_result_postprocessor_not_coroutine_typeerror(postprocess):
+def test_postprocessor_not_coroutine_typeerror(postprocess):
     """Test TypeError is raised if postprocessor isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
-        app.result_postprocessor(postprocess)
+        app.postprocessor(postprocess)
 
 
 @pytest.mark.parametrize('startup', (None, '', False, 10, sum))
@@ -230,7 +230,7 @@ def test_run_forever(event_loop, test_consumer_with_abort):
         middleware_called = True
         return message + 1
 
-    @app.result_postprocessor
+    @app.postprocessor
     @asyncio.coroutine
     def postprocess(app, result):
         nonlocal postprocess_called

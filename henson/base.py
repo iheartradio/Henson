@@ -34,10 +34,9 @@ class Application:
 
     .. versionchanged:: 0.5.0
 
-        ``callback``, ``error``, ``middleware``, and
-        ``result_postprocessor`` now require coroutines, with all but
-        ``callback`` being removed from ``Application.__init__`` in
-        favor of decorators.
+        ``callback``, ``error``, ``middleware``, and ``postprocessor``
+        now require coroutines, with all but ``callback`` being removed
+        from ``Application.__init__`` in favor of decorators.
 
     .. versionchanged:: 0.4.0
 
@@ -62,7 +61,7 @@ class Application:
             'error': [],
             'message_acknowledgement': [],
             'middleware': [],
-            'result_postprocessor': [],
+            'postprocessor': [],
             'startup': [],
             'teardown': [],
         }
@@ -135,7 +134,7 @@ class Application:
         self._register_callback(callback, 'middleware')
         return callback
 
-    def result_postprocessor(self, callback):
+    def postprocessor(self, callback):
         """Register a result postprocessing callback.
 
         Args:
@@ -153,7 +152,7 @@ class Application:
 
         .. versionadded:: 0.5.0
         """
-        self._register_callback(callback, 'result_postprocessor')
+        self._register_callback(callback, 'postprocessor')
         return callback
 
     def run_forever(self, num_workers=1, loop=None, debug=False):
@@ -454,7 +453,7 @@ class Application:
         for result in results:
             try:
                 yield from self._apply_callbacks(
-                    self._callbacks['result_postprocessor'], result)
+                    self._callbacks['postprocessor'], result)
                 self.logger.info('result.postprocessed')
             except Abort as e:
                 yield from self._abort(e)
