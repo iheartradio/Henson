@@ -6,13 +6,13 @@ from henson import exceptions
 from henson.base import Application
 
 
-def test_abort_preprocessor(event_loop, cancelled_future, queue):
-    """Test that aborted preprocessors stop execution."""
-    # This test sets up two preprocessors, a callback, and a
-    # postprocessor. The first preprocessor will raise an Abort
+def test_abort_middleware(event_loop, cancelled_future, queue):
+    """Test that aborted middlewares stop execution."""
+    # This test sets up two middlwares, a callback, and a
+    # postprocessor. The first middleware will raise an Abort
     # exception. None of the others should be called.
-    preprocess1_called = False
-    preprocess2_called = False
+    middleware1_called = False
+    middleware2_called = False
     callback_called = False
     postprocess_called = False
 
@@ -26,18 +26,18 @@ def test_abort_preprocessor(event_loop, cancelled_future, queue):
 
     app = Application('testing', callback=callback)
 
-    @app.message_preprocessor
+    @app.middleware
     @asyncio.coroutine
-    def preprocess1(app, message):
-        nonlocal preprocess1_called
-        preprocess1_called = True
+    def middleware1(app, message):
+        nonlocal middleware1_called
+        middleware1_called = True
         raise exceptions.Abort('testing', message)
 
-    @app.message_preprocessor
+    @app.middleware
     @asyncio.coroutine
-    def preprocess2(app, message):
-        nonlocal preprocess2_called
-        preprocess2_called = True
+    def middleware2(app, message):
+        nonlocal middleware2_called
+        middleware2_called = True
         return message
 
     @app.result_postprocessor
@@ -50,8 +50,8 @@ def test_abort_preprocessor(event_loop, cancelled_future, queue):
     event_loop.run_until_complete(
         app._process(cancelled_future, queue, event_loop))
 
-    assert preprocess1_called
-    assert not preprocess2_called
+    assert middleware1_called
+    assert not middleware2_called
     assert not callback_called
     assert not postprocess_called
 

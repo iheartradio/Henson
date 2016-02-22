@@ -93,7 +93,7 @@ Quickstart
         """Print a footer for the file being processed."""
         print('# Done processing', app.consumer.filename)
 
-    @app.message_preprocessor
+    @app.middleware
     async def remove_comments(app, line):
         """Abort processing of comments (lines that start with #)."""
         if line.strip().startswith('#'):

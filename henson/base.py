@@ -34,7 +34,7 @@ class Application:
 
     .. versionchanged:: 0.5.0
 
-        ``callback``, ``error``, ``message_preprocessor``, and
+        ``callback``, ``error``, ``middleware``, and
         ``result_postprocessor`` now require coroutines, with all but
         ``callback`` being removed from ``Application.__init__`` in
         favor of decorators.
@@ -61,7 +61,7 @@ class Application:
         self._callbacks = {
             'error': [],
             'message_acknowledgement': [],
-            'message_preprocessor': [],
+            'middleware': [],
             'result_postprocessor': [],
             'startup': [],
             'teardown': [],
@@ -114,8 +114,8 @@ class Application:
         self._register_callback(callback, 'message_acknowledgement')
         return callback
 
-    def message_preprocessor(self, callback):
-        """Register a message preprocessing callback.
+    def middleware(self, callback):
+        """Register a middleware to process incoming message.
 
         Args:
             callback (asyncio.coroutine): A callable object that takes
@@ -132,7 +132,7 @@ class Application:
 
         .. versionadded:: 0.5.0
         """
-        self._register_callback(callback, 'message_preprocessor')
+        self._register_callback(callback, 'middleware')
         return callback
 
     def result_postprocessor(self, callback):
@@ -413,7 +413,7 @@ class Application:
 
             try:
                 message = yield from self._apply_callbacks(
-                    self._callbacks['message_preprocessor'], message)
+                    self._callbacks['middleware'], message)
                 self.logger.info('message.preprocessed')
 
                 results = yield from self.callback(self, message)

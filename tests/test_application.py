@@ -116,9 +116,9 @@ def test_message_acknowledgement_original_message(event_loop, coroutine,
 
     app = Application('testing', callback=coroutine)
 
-    @app.message_preprocessor
+    @app.middleware
     @asyncio.coroutine
-    def preprocess(app, message):
+    def middleware(app, message):
         return 'changed'
 
     @app.message_acknowledgement
@@ -133,12 +133,12 @@ def test_message_acknowledgement_original_message(event_loop, coroutine,
     assert actual == expected
 
 
-@pytest.mark.parametrize('preprocess', (None, '', False, 10, sum))
-def test_message_preprocessor_not_coroutine_typeerror(preprocess):
-    """Test TypeError is raised if preprocessor isn't a coroutine."""
+@pytest.mark.parametrize('middleware', (None, '', False, 10, sum))
+def test_middleware_not_coroutine_typeerror(middleware):
+    """Test TypeError is raised if middleware isn't a coroutine."""
     app = Application('testing')
     with pytest.raises(TypeError):
-        app.message_preprocessor(preprocess)
+        app.middleware(middleware)
 
 
 @pytest.mark.asyncio
@@ -199,7 +199,7 @@ def test_teardown_not_coroutine_typeerror(teardown):
 def test_run_forever(event_loop, test_consumer_with_abort):
     """Test Application.run_forever."""
     startup_called = False
-    preprocess_called = False
+    middleware_called = False
     callback_called = False
     postprocess_called = False
     acknowledgement_called = False
@@ -223,11 +223,11 @@ def test_run_forever(event_loop, test_consumer_with_abort):
         nonlocal startup_called
         startup_called = True
 
-    @app.message_preprocessor
+    @app.middleware
     @asyncio.coroutine
-    def preprocess(app, message):
-        nonlocal preprocess_called
-        preprocess_called = True
+    def middleware(app, message):
+        nonlocal middleware_called
+        middleware_called = True
         return message + 1
 
     @app.result_postprocessor
@@ -251,7 +251,7 @@ def test_run_forever(event_loop, test_consumer_with_abort):
     app.run_forever(loop=event_loop)
 
     assert startup_called
-    assert preprocess_called
+    assert middleware_called
     assert callback_called
     assert postprocess_called
     assert acknowledgement_called

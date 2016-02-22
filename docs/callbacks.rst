@@ -55,18 +55,18 @@ and its result(s) have been fully processed.
     async def acknowledge_message(application, original_message):
         await original_message.acknowledge()
 
-``message_preprocessor``
+``middleware``
 =========================
 
-These callbacks are called as each message is first received. Any modifications
-they make to the message will be reflected in what is passed to ``callback``
-for processing.
+These callbacks are called after each message is received and before it is
+passed to ``callback``. Any modifications made to the message will be reflected
+in what is passed to ``callback`` for processing.
 
 .. code::
 
     app = Application('name')
 
-    @app.message_preprocessor
+    @app.middleware
     async def add_process_id(application, message):
         message['pid'] = os.getpid()
         return message
