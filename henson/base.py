@@ -5,6 +5,7 @@ from copy import deepcopy
 import logging
 import sys
 import traceback
+from warnings import warn
 
 from .config import Config
 from .exceptions import Abort
@@ -113,6 +114,35 @@ class Application:
         self._register_callback(callback, 'message_acknowledgement')
         return callback
 
+    def message_preprocessor(self, callback):
+        """Register a middleware to process incoming message.
+
+        Args:
+            callback (asyncio.coroutine): A callable object that takes
+                two arguments: an instance of
+                :class:`henson.base.Application` and the incoming
+                message. It will be called for each incoming message
+                with its result being passed to ``callback``.
+
+        Returns:
+            asyncio.coroutine: The callback.
+
+        Raises:
+            TypeError: If the callback isn't a coroutine.
+
+        Warns:
+            DeprecationWarning: Use
+                :meth:`~henson.base.Application.middleware` instead.
+
+        .. versionadded:: 0.5.0
+        """
+        msg = (
+            "'message_preprocessor' has been deprecated. "
+            "Use 'middleware' instead."
+        )
+        warn(msg, DeprecationWarning)
+        return self.middleware(callback)
+
     def middleware(self, callback):
         """Register a middleware to process incoming message.
 
@@ -154,6 +184,35 @@ class Application:
         """
         self._register_callback(callback, 'postprocessor')
         return callback
+
+    def result_postprocessor(self, callback):
+        """Register a result postprocessing callback.
+
+        Args:
+            callback (asyncio.coroutine): A callable object that takes
+                two arguments: an instance of
+                :class:`henson.base.Application` and a result of
+                processing the incoming message. It will be called for
+                each result returned from ``callback``.
+
+        Returns:
+            asyncio.coroutine: The callback.
+
+        Raises:
+            TypeError: If the callback isn't a coroutine.
+
+        Warns:
+            DeprecationWarning: Use
+                :meth:`~henson.base.Application.postprocessor` instead.
+
+        .. versionadded:: 0.5.0
+        """
+        msg = (
+            "'result_postprocessor' has been deprecated. "
+            "Use 'postprocessor' instead."
+        )
+        warn(msg, DeprecationWarning)
+        return self.postprocessor(callback)
 
     def run_forever(self, num_workers=1, loop=None, debug=False):
         """Consume from the consumer until interrupted.
