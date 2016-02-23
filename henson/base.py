@@ -31,19 +31,6 @@ class Application:
             :class:`henson.base.Application` and the (possibly)
             preprocessed incoming message.  While this isn't required,
             it must be provided before the application can be run.
-
-    .. versionchanged:: 0.5.0
-
-        ``callback``, ``error``, ``message_preprocessor``, and
-        ``result_postprocessor`` now require coroutines, with all but
-        ``callback`` being removed from ``Application.__init__`` in
-        favor of decorators.
-
-    .. versionchanged:: 0.4.0
-
-        The ``message_preprocessors`` and ``result_postprocessors``
-        parameters have been added to optionally preprocess an incoming
-        msesage and postprocess all results.
     """
 
     def __init__(self, name, settings=None, *, consumer=None, callback=None):
@@ -87,8 +74,6 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
-
-        .. versionadded:: 0.5.0
         """
         self._register_callback(callback, 'error')
         return callback
@@ -108,8 +93,6 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
-
-        .. versionadded:: 0.5.0
         """
         self._register_callback(callback, 'message_acknowledgement')
         return callback
@@ -129,8 +112,6 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
-
-        .. versionadded:: 0.5.0
         """
         self._register_callback(callback, 'message_preprocessor')
         return callback
@@ -150,8 +131,6 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
-
-        .. versionadded:: 0.5.0
         """
         self._register_callback(callback, 'result_postprocessor')
         return callback
@@ -173,12 +152,6 @@ class Application:
         Raises:
             TypeError: If the consumer is None or the callback isn't a
                 coroutine.
-
-        .. versionchanged:: 0.5.0
-
-            Messages are now processed asynchronously. The
-            ``num_workers`` parameter has been added to control how many
-            futures are used to process them.
         """
         if self.consumer is None:
             raise TypeError("The Application's consumer cannot be None.")
@@ -282,8 +255,6 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
-
-        .. versionadded:: 0.5.0
         """
         self._register_callback(callback, 'startup')
         return callback
@@ -302,8 +273,6 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
-
-        .. versionadded:: 0.5.0
         """
         self._register_callback(callback, 'teardown')
         return callback
@@ -314,8 +283,6 @@ class Application:
 
         Args:
             exc (henson.exceptions.Abort): The exception to be logged.
-
-        .. versionadded:: 0.5.0
         """
         tb = sys.exc_info()[-1]
         stack = traceback.extract_tb(tb, 1)[-1]
@@ -340,8 +307,6 @@ class Application:
 
         Returns:
             The return value of the final callback.
-
-        .. versionadded:: 0.5.0
         """
         for callback in callbacks:
             value = yield from callback(self, value)
@@ -360,8 +325,6 @@ class Application:
                 processing the messages.
             future (asyncio.Future): When the consumer tells the
                 application to stop, this future will be cancelled.
-
-        .. versionadded:: 0.5.0
         """
         while True:
             # Read messages and add them to the queue.
@@ -390,8 +353,6 @@ class Application:
               to be processed.
             loop (asyncio.asyncio.BaseEventLoop): The event loop used by
                 the application.
-
-        .. versionadded:: 0.5.0
         """
         while True:
             if queue.empty():
@@ -445,8 +406,6 @@ class Application:
         Args:
             results (iterable): The results returned by processing the
                 message.
-
-        .. versionadded:: 0.5.0
         """
         if results is None:
             return
@@ -469,8 +428,6 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
-
-        .. versionadded:: 0.5.0
         """
         if not asyncio.iscoroutinefunction(callback):
             raise TypeError('The callback must be a coroutine.')

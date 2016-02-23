@@ -19,8 +19,6 @@ class Abort(Exception):
             be in the form of "noun.verb" (e.g., "provider.ignored").
         message: The message that is being aborted. Usually this will be
             the incoming message, but it can also be the result.
-
-    .. versionadded:: 0.5.0
     """
 
     def __init__(self, reason, message):
