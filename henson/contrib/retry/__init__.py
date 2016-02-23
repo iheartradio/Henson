@@ -2,8 +2,6 @@
 
 Retry is a plugin to add the ability for Henson to automatically retry
 messages that fail to process.
-
-.. versionadded:: 0.4.0
 """
 
 import asyncio
