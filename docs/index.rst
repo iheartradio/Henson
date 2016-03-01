@@ -50,20 +50,27 @@ directory containing the module and run::
 
     $ henson run file_printer
 
-If a module contains only one instance of a Henson
-:class:`~henson.base.Application`, ``henson run`` will automatically detect and
-run it. If more than one instance exists, the desired application's name must
-be specified::
+Henson's CLI can also be invoked by running the installed package as a script.
+To avoid confusion and prevent different installations of Henson from
+interfering with one another, this is the recommended way to run Henson
+applications::
 
-    $ henson run file_printer:app
+    $ python -m henson run file_printer
+
+If a module contains only one instance of a Henson
+:class:`~henson.base.Application`, ``python -m henson run`` will automatically
+detect and run it. If more than one instance exists, the desired application's
+name must be specified::
+
+    $ python -m henson run file_printer:app
 
 This form always takes precedence over the former, and the ``henson`` command
 won't attempt to auto-detect an instance even if there is a problem with the
 name specified. If the attribute specified by the name after ``:`` is callable,
-``henson run`` will call it and use the returned value as the application. Any
-callable specified this way should require no arguments and return an instance
-of :class:`~henson.base.Application`. Autodiscovery of callables that return
-applications is not currently supported.
+``python -m henson run`` will call it and use the returned value as the
+application. Any callable specified this way should require no arguments and
+return an instance of :class:`~henson.base.Application`. Autodiscovery of
+callables that return applications is not currently supported.
 
 When developing locally, applications often need to be restarted as changes are
 made. To make this easier, Henson provides a ``--reloader`` option to the
@@ -71,14 +78,14 @@ made. To make this easier, Henson provides a ``--reloader`` option to the
 root directory and restart the application automatically when changes are
 detected::
 
-    $ henson run file_printer --reloader
+    $ python -m henson run file_printer --reloader
 
 .. note:: The ``--reloader`` option is not recommended for production use.
 
 It's also possible to enable Henson's `debug mode`_ through the ``--debug``
 option::
 
-    $ henson run file_printer --debug
+    $ python -m henson run file_printer --debug
 
 Logging
 =======
