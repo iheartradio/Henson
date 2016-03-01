@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Collection of Henson CLI tasks."""
 
 import asyncio
@@ -153,7 +151,3 @@ def main():
 parser = ArghParser()
 parser.add_argument('--version', action='version', version=__version__)
 parser.add_commands([run])
-
-
-if __name__ == '__main__':
-    sys.exit(main())
