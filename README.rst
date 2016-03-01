@@ -12,16 +12,7 @@ Henson |build status|
 
 A framework for running a Python service driven by a consumer.
 
-.. code:: python
-
-    from itertools import count
-
-    from henson import Application
-
-    def callback(app, data):
-        print(data)
-
-    app = Application(__name__, consumer=count(), callback=callback)
-
-    if __name__ == '__main__':
-        app.run_forever()
+* `Documentation <https://henson.rtfd.org>`_
+* `Installation <https://henson.readthedocs.org/en/latest/#installation>`_
+* `Changelog <https://henson.readthedocs.org/en/latest/changes.html>`_
+* `Source <https://github.com/iheartradio/Henson>`_
