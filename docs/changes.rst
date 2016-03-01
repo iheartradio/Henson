@@ -1,9 +1,9 @@
 Changelog
 =========
 
-Version 0.5.0
+Version 1.0.0
 -------------
 
-Released TBD
+Released 2016-03-01
 
 - Initial release
