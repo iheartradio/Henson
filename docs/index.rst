@@ -27,11 +27,6 @@ You can install Henson using Pip::
 
     $ python -m pip install henson
 
-.. warning::
-
-    Henson hasn't been uploaded to the Python Package Index yet. Until that
-    time, it must be installed from source.
-
 You can also install it from source::
 
     $ python setup.py install
