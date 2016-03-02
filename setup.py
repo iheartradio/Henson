@@ -25,8 +25,8 @@ setup(
     author_email='henson@iheart.com',
     url='https://henson.rtfd.org',
     description='A framework for running a Python service driven by a consumer',
-    license='Apache License, Version 2.0',
     long_description=read('README.rst'),
+    license='Apache License, Version 2.0',
     packages=find_packages(exclude=['tests']),
     zip_safe=False,
     install_requires=[
