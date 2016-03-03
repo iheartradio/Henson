@@ -121,9 +121,6 @@ Contents:
    changes
 
 
-.. todo:: Testing
-
-
 Indices and tables
 ==================
 
