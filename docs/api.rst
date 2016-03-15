@@ -10,6 +10,12 @@ Application
 .. autoclass:: henson.base.Application
    :members:
 
+Command Line Interface
+======================
+
+.. automodule:: henson.cli
+   :members:
+
 Configuration
 =============
 

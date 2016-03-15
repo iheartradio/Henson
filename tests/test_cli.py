@@ -1,12 +1,13 @@
 """CLI tests."""
 
+from argparse import Namespace
 from inspect import getsource
 
-from argh import CommandError
+from argh import ArghParser, CommandError
 import pytest
 
 
-from henson.cli import run
+from henson import cli, Application
 
 
 @pytest.fixture
@@ -31,6 +32,7 @@ def good_mock_service(modules_tmpdir, test_app):
         'from henson import Application',
         getsource(type(test_app)),
         'app = MockApplication()',
+        'def create_app(): return MockApplication()',
     )))
 
 
@@ -46,73 +48,172 @@ def double_mock_service(modules_tmpdir, test_app):
     )))
 
 
-def test_run_only_module():
-    """Test that the run command fails with a malformed application_path."""
+def test_applicationaction(good_mock_service):
+    """Test _ApplicationAction."""
+    action = cli._ApplicationAction(option_strings='a', dest='app')
+    namespace = Namespace()
+    action(None, namespace, 'good_import:app')
+    assert isinstance(namespace.app, Application)
+
+
+def test_import_application_only_module():
+    """Test that _import_application fails with an invalid application_path."""
     with pytest.raises(CommandError) as e:
-        run('mymodule')
+        cli._import_application('mymodule')
         assert 'Unable to find an import loader for mymodule' in e.message
 
 
-def test_run_failed_loader():
-    """Test that the run command fails with a module that is not found."""
+def test_import_application_failed_loader():
+    """Test that _import_application fails with a module that is not found."""
     with pytest.raises(CommandError) as e:
-        run('mymodule:app')
+        cli._import_application('mymodule:app')
         assert 'Unable to find an import loader' in e.message
 
 
-def test_run_failed_import(bad_mock_service):
-    """Test that the run command fails on dependency import errors."""
+def test_import_application_failed_import(bad_mock_service):
+    """Test that _import_application fails on dependency import errors."""
     with pytest.raises(ImportError):
-        run('bad_import:app')
+        cli._import_application('bad_import:app')
 
 
-def test_run_attribute_error():
-    """Test that the run command fails without an application attribute."""
+def test_import_application_attribute_error():
+    """Test that _import_application fails without an application attribute."""
     # NOTE: we don't need a real application here, just something that
     # doesn't have an attribute called `app`.
     with pytest.raises(AttributeError):
-        run('logging:app')
+        cli._import_application('logging:app')
 
 
-def test_run_non_henson_app():
-    """Test that the run command fails with the incorrect app type."""
+def test_import_application_non_henson_app():
+    """Test that _import_application fails with the incorrect app type."""
     with pytest.raises(CommandError) as e:
-        run('logging:INFO')
+        cli._import_application('logging:INFO')
         assert ("app must be an instance of a Henson application. Got "
                 "<class 'int'>" in e.message)
 
 
-def test_run_without_application():
-    """Test that the run command fails without an app name or instance."""
+def test_import_application_without_application():
+    """Test that _import_applocation fails without an app name or instance."""
     with pytest.raises(CommandError) as e:
-        run('logging')
+        cli._import_application('logging')
         assert 'No Henson application found' in e.message
 
 
-def test_run_with_two_applications(double_mock_service):
-    """Test that the run command fails with ambiguous app choices."""
+def test_import_application_with_two_applications(double_mock_service):
+    """Test that _import_application fails with ambiguous app choices."""
     with pytest.raises(CommandError) as e:
-        run('double_service')
+        cli._import_application('double_service')
         assert 'More than one Henson application found' in e.message
 
 
-def test_run_app_autodetect(good_mock_service, capsys):
+def test_import_application_app_autodetect(good_mock_service):
     """Test that an app can be selected automatically."""
-    run('good_import')
-    out, _ = capsys.readouterr()
-    assert 'Run, Forrest, run!' in out
+    _, actual = cli._import_application('good_import')
+    assert isinstance(actual, Application)
+
+
+def test_import_application_callable(good_mock_service):
+    """Test that an app can be loaded from a callable."""
+    _, actual = cli._import_application('good_import:create_app')
+    assert isinstance(actual, Application)
+
+
+def test_import_application_explicit_app(good_mock_service):
+    """Test that an app can be explicitly specified."""
+    _, actual = cli._import_application('good_import:app')
+    assert isinstance(actual, Application)
+
+
+def test_register_commands(monkeypatch):
+    """Test register_commands with no arguments."""
+    monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
+
+    def simple():
+        pass
+
+    cli.register_commands('testing', [simple])
+
+    args = cli.parser.parse_args(['testing', 'simple'])
+    assert args
+
+
+@pytest.mark.parametrize('arguments, a, b', (
+    ([], 1, 2),
+    (['2'], 2, 2),
+    (['2', '3'], 2, 3),
+))
+def test_register_commands_keyword(monkeypatch, arguments, a, b):
+    """Test register_commands with keyword arguments."""
+    monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
+
+    def keyword(a=1, b=2):
+        pass
+
+    cli.register_commands('testing', [keyword])
+
+    args = cli.parser.parse_args(['testing', 'keyword'] + arguments)
+    assert args.a == a
+    assert args.b == b
+
+
+@pytest.mark.parametrize('arguments, first, second', (
+    ([], 1, 2),
+    (['--first', '2'], 2, 2),
+    (['--second', '1'], 1, 1),
+    (['--first', '2', '--second', '3'], 2, 3),
+))
+def test_register_commands_keyword_only(monkeypatch, arguments, first, second):
+    """Test register_commands with keyword-only arguments."""
+    monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
+
+    def keyword(*, first=1, second=2):
+        pass
+
+    cli.register_commands('testing', [keyword])
+
+    args = cli.parser.parse_args(['testing', 'keyword'] + arguments)
+    assert args.first == first
+    assert args.second == second
+
+
+def test_register_commands_keyword_only_conflicts(monkeypatch):
+    """Test register_commands with key-only arguments with conflicts."""
+    monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
+
+    def keyword(*, arg1=1, arg2=2):
+        pass
+
+    cli.register_commands('testing', [keyword])
+
+    with pytest.raises(SystemExit):
+        cli.parser.parse_args(['testing', 'keyword', '-a', '1'])
+
+
+def test_register_commands_positional(monkeypatch):
+    """Test register_commands with positional arguments."""
+    monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
+
+    def positional(a, b):
+        pass
+
+    cli.register_commands('testing', [positional])
+
+    args = cli.parser.parse_args(['testing', 'positional', '1', '2'])
+    assert args.a == '1'
+    assert args.b == '2'
 
 
 def test_run_forever(good_mock_service, capsys):
     """Test that run_forever is called on the imported app."""
-    run('good_import:app')
+    cli.run('good_import:app')
     out, _ = capsys.readouterr()
+    assert 'Running <Application: testing> forever' in out
     assert 'Run, Forrest, run!' in out
 
 
 def test_run_with_reloader(good_mock_service, capsys):
-    """Test that an app can be selected automatically."""
-    run('good_import', reloader=True)
+    """Test that an app is run with the reloader."""
+    cli.run('good_import:app', reloader=True)
     out, _ = capsys.readouterr()
-    assert 'Running good_import.app with reloader' in out
+    assert 'Running <Application: testing> with reloader' in out
     assert 'Run, Forrest, run!' in out
