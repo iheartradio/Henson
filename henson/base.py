@@ -58,6 +58,12 @@ class Application:
 
         self.logger = logging.getLogger(self.name)
 
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return '<Application: {}>'.format(self)
+
     def error(self, callback):
         """Register an error callback.
 
