@@ -62,6 +62,6 @@ Available Extensions
 
 Several extensions are available for use:
 
-* `Henson-AMQP <https://github.com/iheartradio/Henson-AMQP>`_
-* `Henson-Database <https://github.com/iheartradio/Henson-Database>`_
-* `Henson-Logging <https://github.com/iheartradio/Henson-Logging>`_
+* `Henson-AMQP <https://henson-amqp.rtfd.org>`_
+* `Henson-Database <https://henson-database.rtfd.org>`_
+* `Henson-Logging <https://henson-logging.rtfd.org>`_
