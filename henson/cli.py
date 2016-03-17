@@ -14,21 +14,11 @@ from . import __version__
 from .base import Application
 
 
-def run(application_path, reloader=False, workers=1, debug=False):
-    """Import and run an application.
-
-    Args:
-        application_path (str): The path to the application that should
-            be imported and run.
-        reloader (Optional[bool]): Whether or not to watch for changes
-            within an application and reload the running instance when
-            they are detected. Not recommended for production use.
-            Defaults to False.
-        workers (Optional[int]): How many async workers the application
-            should use to process messages. Defaults to 1.
-        debug (Optional[bool]): Whether or not to run the application
-            with debug mode enabled. Defaults to False.
-    """
+def run(application_path: 'the path to the application to run',
+        reloader: 'reload the application on changes' = False,
+        workers: 'the number of asynchronous tasks to run' = 1,
+        debug: 'enable debug mode' = False):
+    """Import and run an application."""
     # Add the present working directory to the import path so that
     # services can be found without installing them to site-packages
     # or modifying PYTHONPATH
