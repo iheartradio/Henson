@@ -2,11 +2,6 @@
 Henson
 ======
 
-.. image:: _static/logo.png
-   :width: 400
-   :height: 400
-   :align: center
-
 Henson is a library for building services that are driven by consumers. Henson
 applications read from objects that implement the :doc:`/interface` and provide
 the message received to a callback for processing. The messsage can be
