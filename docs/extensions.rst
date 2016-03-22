@@ -57,6 +57,71 @@ that are meant to be overridden:
   ``KeyError`` is raised. Extensions should set this when a value is required
   but has no default (e.g., a database password).
 
+Extending the Command Line
+==========================
+
+Henson offers an extensible command line interface. To register your own
+commands, use :func:`~henson.cli.register_commands`. Any function passed to it
+will have its usage created directly from its signature. In order to access the
+new commands, the ``henson`` command line utility must be given a reference to
+an :class:`~henson.base.Application`. This is done through the ``--app``
+argument:
+
+.. code::
+
+    $ henson --app APP_PATH
+
+.. note::
+
+    For details about the syntax to use when passing a reference to an
+    :class:`~henson.base.Application`, see :ref:`running-applications`.
+
+A positional argument in the Python function will result in a required
+positional argument in the command::
+
+    def trash(grouch):
+        pass
+
+.. code:: sh
+
+    $ henson --app APP_PATH NAMESPACE trash GROUCH
+
+A keyword argument in the Python function will result in a positional argument
+in the command with a default value to be used when the argument is omitted::
+
+    def trash(grouch='oscar'):
+        pass
+
+.. code:: sh
+
+    $ henson --app APP_PATH NAMESPACE trash [GROUCH]
+
+A keyword-only argument in the Python function will result in an optional
+argument in the command::
+
+    def trash(*, grouch='oscar'):
+        pass
+
+.. code:: sh
+
+    $ henson --app APP_PATH NAMESPACE trash [--grouch GROUCH]
+
+By default, all optional arguments will have a flag that matches the function
+argument's name. When no other optional arguments start with the same
+character, a single-character abbreviated flag can also be used.
+
+.. code:: sh
+
+    $ henson --app APP_PATH NAMESPACE trash [-g GROUCH]
+
+The ``trash`` function can then be registered with the CLI::
+
+    register_commands('sesame', [trash])
+
+.. code:: sh
+
+    $ henson --app APP_PATH sesame trash --help
+
 Available Extensions
 ====================
 

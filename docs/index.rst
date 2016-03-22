@@ -31,6 +31,8 @@ Quickstart
 
 .. literalinclude:: file_consumer.py
 
+.. _running-applications:
+
 Running Applications
 ====================
 
