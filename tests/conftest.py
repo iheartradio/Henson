@@ -20,7 +20,7 @@ class MockApplication(Application):
         super().__init__('testing')
         self.settings = settings
 
-    def run_forever(self, num_workers=1, loop=None):
+    def run_forever(self, num_workers=1, loop=None, debug=False):
         """Run the instance."""
         print('Run, Forrest, run!')
 

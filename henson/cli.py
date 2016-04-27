@@ -150,9 +150,10 @@ def run(application_path: 'the path to the application to run',
     """Import and run an application."""
     import_path, app = _import_application(application_path)
 
-    if reloader:
-        # If the reloader is requested, create threads for running the
-        # application and watching the file system for changes
+    if reloader or debug:
+        # If the reloader is requested (or debug is enabled), create
+        # threads for running the application and watching the file
+        # system for changes.
         print('Running {!r} with reloader...'.format(app))
 
         # Find the root of the application and watch for changes
@@ -165,7 +166,7 @@ def run(application_path: 'the path to the application to run',
         loop = asyncio.new_event_loop()
         runner = Thread(
             target=app.run_forever,
-            kwargs={'num_workers': workers, 'loop': loop},
+            kwargs={'num_workers': workers, 'loop': loop, 'debug': debug},
         )
 
         # This function is called by watchdog event handler when changes
@@ -189,7 +190,7 @@ def run(application_path: 'the path to the application to run',
     else:
         # If the reloader is not needed, avoid the overhead
         print('Running {!r} forever...'.format(app))
-        app.run_forever(num_workers=workers)
+        app.run_forever(num_workers=workers, debug=debug)
 
 
 class _ApplicationAction(Action):
