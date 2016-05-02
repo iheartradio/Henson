@@ -97,9 +97,10 @@ def run(application_path, reloader=False, workers=1, debug=False):
 
         app_name, app = app_candidates[0]
 
-    if reloader:
-        # If the reloader is requested, create threads for running the
-        # application and watching the file system for changes
+    if reloader or debug:
+        # If the reloader is requested (or debug is enabled), create
+        # threads for running the application and watching the file
+        # system for changes.
         print('Running {}.{} with reloader...'.format(
             import_path,
             app_name,
@@ -115,7 +116,7 @@ def run(application_path, reloader=False, workers=1, debug=False):
         loop = asyncio.new_event_loop()
         runner = Thread(
             target=app.run_forever,
-            kwargs={'num_workers': workers, 'loop': loop},
+            kwargs={'num_workers': workers, 'loop': loop, 'debug': debug},
         )
 
         # This function is called by watchdog event handler when changes
@@ -139,7 +140,7 @@ def run(application_path, reloader=False, workers=1, debug=False):
     else:
         # If the reloader is not needed, avoid the overhead
         print('Running {}.{} forever ...'.format(import_path, app_name))
-        app.run_forever(num_workers=workers)
+        app.run_forever(num_workers=workers, debug=debug)
 
 
 def main():

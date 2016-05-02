@@ -87,6 +87,10 @@ option::
 
     $ python -m henson run file_printer --debug
 
+.. note:: The ``--debug`` option is not recommended for production use.
+
+This will also enable the reloader.
+
 Logging
 =======
 
