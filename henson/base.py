@@ -191,7 +191,7 @@ class Application:
             loop.set_debug(True)
             self.logger.setLevel(logging.DEBUG)
 
-        self.logger.info('application.started')
+        self.logger.debug('application.started')
 
         # Create an asynchronous queue to pass the messages from the
         # consumer to the processor. The queue should hold one message
@@ -245,7 +245,7 @@ class Application:
             # Clean up after ourselves.
             loop.close()
 
-        self.logger.info('application.stopped')
+        self.logger.debug('application.stopped')
 
     def startup(self, callback):
         """Register a startup callback.
@@ -292,7 +292,7 @@ class Application:
         """
         tb = sys.exc_info()[-1]
         stack = traceback.extract_tb(tb, 1)[-1]
-        self.logger.info('callback.aborted', extra={
+        self.logger.debug('callback.aborted', extra={
             'exception': exc,
             'exception_message': exc.message,
             'aborted_by': stack,
@@ -337,7 +337,7 @@ class Application:
             try:
                 value = yield from self.consumer.read()
             except Abort:
-                self.logger.info('consumer.aborted')
+                self.logger.debug('consumer.aborted')
                 future.cancel()
                 return
             except Exception as e:
@@ -381,7 +381,7 @@ class Application:
             try:
                 message = yield from self._apply_callbacks(
                     self._callbacks['message_preprocessor'], message)
-                self.logger.info('message.preprocessed')
+                self.logger.debug('message.preprocessed')
 
                 results = yield from self.callback(self, message)
             except Abort as e:
@@ -403,7 +403,7 @@ class Application:
                 # the original message into each callback.
                 for callback in self._callbacks['message_acknowledgement']:
                     yield from callback(self, original_message)
-                self.logger.info('message.acknowledged')
+                self.logger.debug('message.acknowledged')
 
     @asyncio.coroutine
     def _postprocess_results(self, results):
@@ -420,7 +420,7 @@ class Application:
             try:
                 yield from self._apply_callbacks(
                     self._callbacks['result_postprocessor'], result)
-                self.logger.info('result.postprocessed')
+                self.logger.debug('result.postprocessed')
             except Abort as e:
                 yield from self._abort(e)
 
@@ -440,7 +440,7 @@ class Application:
 
         self._callbacks[callback_container].append(callback)
 
-        self.logger.info('callback.registered', extra={
+        self.logger.debug('callback.registered', extra={
             'type': callback_container,
             'callback': callback.__qualname__,
         })
