@@ -116,6 +116,7 @@ Contents:
 
    interface
    callbacks
+   cli
    extensions
    contrib
    api

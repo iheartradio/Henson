@@ -1,4 +1,5 @@
 doc8
 sphinx
 sphinx_rtd_theme
+sphinxcontrib-autoprogram
 sphinxcontrib-napoleon
