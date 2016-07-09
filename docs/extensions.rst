@@ -57,6 +57,8 @@ that are meant to be overridden:
   ``KeyError`` is raised. Extensions should set this when a value is required
   but has no default (e.g., a database password).
 
+.. _extending-the-cli:
+
 Extending the Command Line
 ==========================
 

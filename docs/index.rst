@@ -64,24 +64,8 @@ application. Any callable specified this way should require no arguments and
 return an instance of :class:`~henson.base.Application`. Autodiscovery of
 callables that return applications is not currently supported.
 
-When developing locally, applications often need to be restarted as changes are
-made. To make this easier, Henson provides a ``--reloader`` option to the
-``run`` command. With this option enabled, Henson will watch an application's
-root directory and restart the application automatically when changes are
-detected::
-
-    $ python -m henson run file_printer --reloader
-
-.. note:: The ``--reloader`` option is not recommended for production use.
-
-It's also possible to enable Henson's `debug mode`_ through the ``--debug``
-option::
-
-    $ python -m henson run file_printer --debug
-
-.. note:: The ``--debug`` option is not recommended for production use.
-
-This will also enable the reloader.
+More detailed information about Henson's command line interface can be found in
+:doc:`cli`.
 
 Logging
 =======
@@ -116,6 +100,7 @@ Contents:
 
    interface
    callbacks
+   cli
    extensions
    contrib
    api
