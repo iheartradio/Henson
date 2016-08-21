@@ -129,6 +129,6 @@ Available Extensions
 
 Several extensions are available for use:
 
-* `Henson-AMQP <https://henson-amqp.rtfd.org>`_
-* `Henson-Database <https://henson-database.rtfd.org>`_
-* `Henson-Logging <https://henson-logging.rtfd.org>`_
+* `Henson-AMQP <https://henson-amqp.readthedocs.io>`_
+* `Henson-Database <https://henson-database.readthedocs.io>`_
+* `Henson-Logging <https://henson-logging.readthedocs.io>`_

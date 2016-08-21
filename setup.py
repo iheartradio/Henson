@@ -23,7 +23,7 @@ setup(
     version='1.1.0',
     author='Andy Dirnberger, Jon Banafato, and others',
     author_email='henson@iheart.com',
-    url='https://henson.rtfd.org',
+    url='https://henson.readthedocs.io',
     description='A framework for running a Python service driven by a consumer',
     long_description=read('README.rst'),
     license='Apache License, Version 2.0',
