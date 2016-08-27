@@ -203,17 +203,17 @@ def test_register_commands_positional(monkeypatch):
     assert args.b == '2'
 
 
-def test_run_forever(good_mock_service, capsys):
+def test_run_forever(good_mock_service, caplog, capsys):
     """Test that run_forever is called on the imported app."""
     cli.run('good_import:app')
     out, _ = capsys.readouterr()
-    assert 'Running <Application: testing> forever' in out
+    assert 'Running <Application: testing> forever' in caplog.text()
     assert 'Run, Forrest, run!' in out
 
 
-def test_run_with_reloader(good_mock_service, capsys):
+def test_run_with_reloader(good_mock_service, caplog, capsys):
     """Test that an app is run with the reloader."""
     cli.run('good_import:app', reloader=True)
     out, _ = capsys.readouterr()
-    assert 'Running <Application: testing> with reloader' in out
+    assert 'Running <Application: testing> with reloader' in caplog.text()
     assert 'Run, Forrest, run!' in out
