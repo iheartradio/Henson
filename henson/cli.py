@@ -154,7 +154,7 @@ def run(application_path: 'the path to the application to run',
         # If the reloader is requested (or debug is enabled), create
         # threads for running the application and watching the file
         # system for changes.
-        print('Running {!r} with reloader...'.format(app))
+        app.logger.debug('Running {!r} with reloader...'.format(app))
 
         # Find the root of the application and watch for changes
         watchdir = os.path.abspath(import_module(import_path).__file__)
@@ -189,7 +189,7 @@ def run(application_path: 'the path to the application to run',
 
     else:
         # If the reloader is not needed, avoid the overhead
-        print('Running {!r} forever...'.format(app))
+        app.logger.debug('Running {!r} forever...'.format(app))
         app.run_forever(num_workers=workers, debug=debug)
 
 
