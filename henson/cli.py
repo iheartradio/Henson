@@ -174,7 +174,9 @@ def register_commands(namespace, functions, namespace_kwargs=None,
     )
 
 
-def run(application_path: 'the path to the application to run',
+@arg('-v', '--verbose', action='count', help='verbose mode')
+def run(
+        application_path: 'the path to the application to run',
         reloader: 'reload the application on changes' = False,
         workers: 'the number of asynchronous tasks to run' = 1,
         debug: 'enable debug mode' = False,
