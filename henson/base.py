@@ -188,9 +188,11 @@ class Application:
             self.settings['DEBUG'] = True
         if self.settings['DEBUG']:
             # If the application is running in debug mode, enable it for
-            # the loop and set the logger to DEBUG.
+            # the loop and set the logger to DEBUG. If, however, the
+            # log level was set to something lower than DEBUG, don't
+            # change it.
             loop.set_debug(True)
-            self.logger.setLevel(logging.DEBUG)
+            self.logger.setLevel(min(self.logger.level, logging.DEBUG))
 
         self.logger.debug('application.started')
 
