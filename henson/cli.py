@@ -166,6 +166,8 @@ def register_commands(namespace, functions, namespace_kwargs=None,
         # Add the function to the list of commands to add to the parser.
         commands.append(function)
 
+    func_kwargs['parents'] = parent
+
     parser.add_commands(
         namespace=namespace,
         functions=commands,
@@ -174,7 +176,6 @@ def register_commands(namespace, functions, namespace_kwargs=None,
     )
 
 
-@arg('-v', '--verbose', action='count', help='verbose mode')
 def run(
         application_path: 'the path to the application to run',
         reloader: 'reload the application on changes' = False,
