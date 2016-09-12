@@ -6,6 +6,9 @@ Release TDB
 - Add ``henson.cli.register_commands`` to extend the command line interface
 - Messages are logged using ``logging.DEBUG`` instead of ``logging.INFO``
 - Calls to ``print`` in ``henson.cli.run`` are updated to ``app.logger.debug``
+- References to objects used by ``henson.Application`` are removed once they
+  are no longer needed to allow the memory to be freed up before the next
+  message is received.
 
 Version 1.0.0
 -------------
