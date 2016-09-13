@@ -1,6 +1,7 @@
 """Implementation of the service."""
 
 import asyncio
+from contextlib import suppress
 from copy import deepcopy
 import logging
 import sys
@@ -404,6 +405,20 @@ class Application:
                 for callback in self._callbacks['message_acknowledgement']:
                     yield from callback(self, original_message)
                 self.logger.debug('message.acknowledged')
+
+                # If there are no new messages in the queue, _process
+                # won't reassign the variables that it uses to track the
+                # message and its results. This will cause the memory to
+                # stay allocated longer than the application needs it.
+                # By destroying the references to the objects that are
+                # no longer needed, the memory can be freed up for other
+                # things to use.
+                with suppress(UnboundLocalError):
+                    # If an exception was raised, results may not have
+                    # been set.
+                    del results
+                del message
+                del original_message
 
     @asyncio.coroutine
     def _postprocess_results(self, results):
