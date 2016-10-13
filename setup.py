@@ -20,7 +20,7 @@ def read(filename):
 
 setup(
     name='Henson',
-    version='1.2.0',
+    version='2.0.0',
     author='Andy Dirnberger, Jon Banafato, and others',
     author_email='henson@iheart.com',
     url='https://henson.readthedocs.io',
@@ -41,7 +41,6 @@ setup(
     },
     tests_require=[
         'pytest',
-        'pytest-asyncio',
     ],
     cmdclass={
         'test': PyTest,
@@ -57,6 +56,7 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',

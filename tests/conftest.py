@@ -1,7 +1,5 @@
 """Test configuration."""
 
-import asyncio
-
 import pytest
 
 from henson import Application
@@ -29,7 +27,6 @@ class MockApplication(Application):
 class MockConsumer:
     """A stub consumer that can be used for testing."""
 
-    @asyncio.coroutine
     def read(self):
         """Return an item."""
         return 1
@@ -40,7 +37,6 @@ class MockAbortingConsumer:
 
     _run = False
 
-    @asyncio.coroutine
     def read(self):
         """Return an item."""
         if self._run:
@@ -48,29 +44,6 @@ class MockAbortingConsumer:
 
         self._run = True
         return 1
-
-
-@pytest.fixture
-def cancelled_future(event_loop):
-    """Return a Future that's been cancelled."""
-    future = asyncio.Future(loop=event_loop)
-    future.cancel()
-    return future
-
-
-@pytest.fixture
-def coroutine():
-    """Return a coroutine function."""
-    @asyncio.coroutine
-    def _inner(*args, **kwargs):
-        pass
-    return _inner
-
-
-@pytest.fixture
-def queue():
-    """Return an asynchronous queue."""
-    return asyncio.Queue()
 
 
 @pytest.fixture

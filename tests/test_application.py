@@ -1,27 +1,22 @@
 """Test Application."""
 
-import asyncio
-
 import pytest
 
 from henson.base import Application
 from henson.exceptions import Abort
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize('original, expected', ((1, 4), (2, 6)))
 def test_apply_callbacks(original, expected):
     """Test Application._apply_callbacks."""
     callback1_called = False
     callback2_called = False
 
-    @asyncio.coroutine
     def callback1(app, message):
         nonlocal callback1_called
         callback1_called = True
         return message + 1
 
-    @asyncio.coroutine
     def callback2(app, message):
         nonlocal callback2_called
         callback2_called = True
@@ -29,56 +24,14 @@ def test_apply_callbacks(original, expected):
 
     app = Application('testing')
 
-    actual = yield from app._apply_callbacks([callback1, callback2], original)
+    actual = app._apply_callbacks([callback1, callback2], original)
     assert actual == expected
 
     assert callback1_called
     assert callback2_called
 
 
-def test_consume(event_loop, test_consumer):
-    """Test Application._consume."""
-    queue = asyncio.Queue(maxsize=1)
-
-    app = Application('testing', consumer=test_consumer)
-
-    asyncio.async(app._consume(queue))
-
-    event_loop.stop()  # Run the event loop once.
-    event_loop.run_forever()
-
-    # The size of the queue won't ever be larger than 1 because of the
-    # maxsize argument.
-    assert queue.qsize() == 1
-
-
-def test_consumer_aborts(event_loop):
-    """Test that the application stops after the consumer aborts."""
-    consumer_called = False
-    callback_called = False
-
-    class Consumer:
-        @asyncio.coroutine
-        def read(self):
-            nonlocal consumer_called
-            consumer_called = True
-            raise Abort('reason', 'message')
-
-    @asyncio.coroutine
-    def callback(app, message):
-        nonlocal callback_called
-        callback_called = True
-        while True:
-            yield from asyncio.sleep(0)
-
-    app = Application('testing', consumer=Consumer(), callback=callback)
-    app.run_forever(loop=event_loop)
-
-    assert consumer_called
-    assert not callback_called
-
-
-def test_consumer_exception(event_loop):
+def test_consumer_exception():
     """Test that the application stops after a consumer exception."""
     consumer_called = False
     callback_called = False
@@ -96,7 +49,7 @@ def test_consumer_exception(event_loop):
         callback_called = True
 
     app = Application('testing', consumer=Consumer(), callback=callback)
-    app.run_forever(loop=event_loop)
+    app.run_forever()
 
     assert consumer_called
     assert not callback_called
@@ -133,8 +86,7 @@ def test_message_acknowledgement_not_coroutine_typeerror(acknowledgement):
         app.message_acknowledgement(acknowledgement)
 
 
-def test_message_acknowledgement_original_message(event_loop, coroutine,
-                                                  cancelled_future, queue):
+def test_message_acknowledgement_original_message():
     """Test that original message is acknowledged."""
     actual = ''
 
@@ -144,12 +96,10 @@ def test_message_acknowledgement_original_message(event_loop, coroutine,
     app = Application('testing', callback=coroutine)
 
     @app.message_preprocessor
-    @asyncio.coroutine
     def preprocess(app, message):
         return 'changed'
 
     @app.message_acknowledgement
-    @asyncio.coroutine
     def acknowledge(app, message):
         nonlocal actual
         actual = message
