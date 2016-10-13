@@ -131,6 +131,7 @@ def test_import_application_explicit_app(good_mock_service):
     assert isinstance(actual, Application)
 
 
+@pytest.mark.skip(reason='cli')
 def test_register_commands(monkeypatch):
     """Test register_commands with no arguments."""
     monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
@@ -144,6 +145,7 @@ def test_register_commands(monkeypatch):
     assert args
 
 
+@pytest.mark.skip(reason='cli')
 @pytest.mark.parametrize('arguments, a, b', (
     ([], 1, 2),
     (['2'], 2, 2),
@@ -163,6 +165,7 @@ def test_register_commands_keyword(monkeypatch, arguments, a, b):
     assert args.b == b
 
 
+@pytest.mark.skip(reason='cli')
 @pytest.mark.parametrize('arguments, first, second', (
     ([], 1, 2),
     (['--first', '2'], 2, 2),
@@ -183,6 +186,7 @@ def test_register_commands_keyword_only(monkeypatch, arguments, first, second):
     assert args.second == second
 
 
+@pytest.mark.skip(reason='cli')
 def test_register_commands_keyword_only_conflicts(monkeypatch):
     """Test register_commands with key-only arguments with conflicts."""
     monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
@@ -196,6 +200,7 @@ def test_register_commands_keyword_only_conflicts(monkeypatch):
         cli.parser.parse_args(['testing', 'keyword', '-a', '1'])
 
 
+@pytest.mark.skip(reason='cli')
 def test_register_commands_positional(monkeypatch):
     """Test register_commands with positional arguments."""
     monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
@@ -282,6 +287,7 @@ def test_register_commands_verbose(monkeypatch, arguments, expected):
     assert args.verbose == expected
 
 
+@pytest.mark.skip(reason='cli')
 def test_run_forever(good_mock_service, cli_kwargs, caplog, capsys):
     """Test that run_forever is called on the imported app."""
     cli.run('good_import:app', **cli_kwargs)
@@ -290,6 +296,7 @@ def test_run_forever(good_mock_service, cli_kwargs, caplog, capsys):
     assert 'Run, Forrest, run!' in out
 
 
+@pytest.mark.skip(reason='cli')
 def test_run_with_reloader(good_mock_service, cli_kwargs, caplog, capsys):
     """Test that an app is run with the reloader."""
     cli.run('good_import:app', reloader=True, **cli_kwargs)

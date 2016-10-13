@@ -27,9 +27,11 @@ class MockApplication(Application):
 class MockConsumer:
     """A stub consumer that can be used for testing."""
 
+    message = 1
+
     def read(self):
         """Return an item."""
-        return 1
+        return self.message
 
 
 class MockAbortingConsumer:
@@ -60,6 +62,15 @@ def settings():
 def test_app():
     """Return a test application."""
     return MockApplication()
+
+
+@pytest.fixture
+def callback():
+    """Return a test callback function."""
+    def callback(*args):
+        return args[-1]
+
+    return callback
 
 
 @pytest.fixture

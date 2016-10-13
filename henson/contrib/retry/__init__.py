@@ -4,7 +4,6 @@ Retry is a plugin to add the ability for Henson to automatically retry
 messages that fail to process.
 """
 
-import asyncio
 import time
 
 from henson.exceptions import Abort
@@ -69,7 +68,6 @@ def _exceeded_timeout(start_time, duration):
     return start_time + (duration * 1000) <= int(time.time())
 
 
-@asyncio.coroutine
 def _retry(app, message, exc):
     """Retry the message.
 
@@ -115,12 +113,12 @@ def _retry(app, message, exc):
             backoff=app.settings['RETRY_BACKOFF'],
             number_of_retries=retry_info['count'],
         )
-        yield from asyncio.sleep(retry_info['delay'])
+        # yield from asyncio.sleep(retry_info['delay'])
 
     # Update the retry information and retry the message.
     retry_info['count'] += 1
     message['_retry'] = retry_info
-    yield from app.settings['RETRY_CALLBACK'](app, message)
+    app.settings['RETRY_CALLBACK'](app, message)
 
     # If the exception was retryable, none of the other callbacks should
     # execute.
@@ -180,8 +178,8 @@ class Retry(Extension):
         if app.settings['RETRY_BACKOFF'] < 0:
             raise ValueError('The backoff cannot be negative.')
 
-        if not asyncio.iscoroutinefunction(app.settings['RETRY_CALLBACK']):
-            raise TypeError('The retry callback is not a coroutine.')
+        if not callable(app.settings['RETRY_CALLBACK']):
+            raise TypeError('The retry callback is not callable.')
 
         # The retry callback should be executed before all other
         # callbacks. This will ensure that retryable exceptions are

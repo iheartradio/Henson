@@ -185,7 +185,8 @@ class Application:
 
         try:
             # Run the loop until the consumer says to stop.
-            self._process()
+            while True:
+                self._process()
         except BaseException as e:
             self.logger.error(e)
         finally:
@@ -266,38 +267,37 @@ class Application:
 
     def _process(self):
         """Process incoming messages."""
-        while True:
-            message = self.consumer.consume()
-            # Save a copy of the original message in case its needed
-            # later.
-            original_message = deepcopy(message)
+        message = self.consumer.read()
+        # Save a copy of the original message in case its needed
+        # later.
+        original_message = deepcopy(message)
 
-            try:
-                message = self._apply_callbacks(
-                    self._callbacks['message_preprocessor'], message)
-                self.logger.debug('message.preprocessed')
+        try:
+            message = self._apply_callbacks(
+                self._callbacks['message_preprocessor'], message)
+            self.logger.debug('message.preprocessed')
 
-                results = self.callback(self, message)
-            except Abort as e:
-                self._abort(e)
-            except Exception as e:
-                self.logger.error('message.failed', exc_info=sys.exc_info())
+            results = self.callback(self, message)
+        except Abort as e:
+            self._abort(e)
+        except Exception as e:
+            self.logger.error('message.failed', exc_info=sys.exc_info())
 
-                for callback in self._callbacks['error']:
-                    # Any callback can prevent execution of further
-                    # callbacks by raising Abort.
-                    try:
-                        callback(self, message, e)
-                    except Abort:
-                        break
-            else:
-                self._postprocess_results(results)
-            finally:
-                # Don't use _apply_callbacks here since we want to pass
-                # the original message into each callback.
-                for callback in self._callbacks['message_acknowledgement']:
-                    callback(self, original_message)
-                self.logger.debug('message.acknowledged')
+            for callback in self._callbacks['error']:
+                # Any callback can prevent execution of further
+                # callbacks by raising Abort.
+                try:
+                    callback(self, message, e)
+                except Abort:
+                    break
+        else:
+            self._postprocess_results(results)
+        finally:
+            # Don't use _apply_callbacks here since we want to pass
+            # the original message into each callback.
+            for callback in self._callbacks['message_acknowledgement']:
+                callback(self, original_message)
+            self.logger.debug('message.acknowledged')
 
     def _postprocess_results(self, results):
         """Postprocess the results.
