@@ -77,6 +77,9 @@ class Extension:
                 )
             )
 
+        if hasattr(self, 'register_cli'):
+            self.register_cli()
+
         self._app = app
         self._app.extensions[self.__class__.__name__.lower()] = self
 

@@ -34,6 +34,11 @@ setup(
         'argh',
         'watchdog>=0.8.3',
     ],
+    extras_require={
+        'sphinx': [
+            'sphinxcontrib-autoprogram>=0.1.3',
+        ],
+    },
     tests_require=[
         'pytest',
         'pytest-asyncio',
