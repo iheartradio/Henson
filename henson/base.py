@@ -167,7 +167,7 @@ class Application:
             raise TypeError("The Application's callback must be a coroutine.")
 
         # Use the specified event loop, otherwise use the default one.
-        loop = loop or asyncio.get_event_loop()
+        loop = loop or _new_event_loop()
         asyncio.set_event_loop(loop)
 
         # Start the application.
@@ -467,3 +467,22 @@ class Application:
             self._callbacks['teardown']]
         future = asyncio.gather(*tasks, loop=loop)
         loop.run_until_complete(future)
+
+
+def _new_event_loop():
+    """Return a new event loop.
+
+    If `uvloop <https://uvloop.readthedocs.io>`_ is installed, its event
+    loop will be used. Otherwise, the default event loop provided by
+    asyncio will be used. The latter behavior can be overridden by
+    setting the event loop policy.
+
+    Returns:
+        asyncio.AbstractEventLoopPolicy: The new event loop.
+    """
+    try:
+        import uvloop
+    except ImportError:
+        return asyncio.new_event_loop()
+    else:
+        return uvloop.new_event_loop()
