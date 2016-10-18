@@ -9,6 +9,7 @@ Release TDB
 - References to objects used by ``henson.Application`` are removed once they
   are no longer needed to allow the memory to be freed up before the next
   message is received.
+- uvloop_ will be used for the event loop if it's installed.
 
 Version 1.0.0
 -------------
@@ -16,3 +17,5 @@ Version 1.0.0
 Released 2016-03-01
 
 - Initial release
+
+.. _uvloop: https://uvloop.readthedocs.io
