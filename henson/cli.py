@@ -1,7 +1,6 @@
 """Collection of Henson CLI tasks."""
 
 from argparse import Action
-import asyncio
 from collections import Counter
 from copy import deepcopy
 from contextlib import suppress
@@ -19,7 +18,7 @@ from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 
 from . import __version__
-from .base import Application
+from .base import Application, _new_event_loop
 
 __all__ = ('register_commands',)
 
@@ -213,7 +212,7 @@ def run(application_path: 'the path to the application to run',
 
         # Create observer and runner threads
         observer = Observer()
-        loop = asyncio.new_event_loop()
+        loop = _new_event_loop()
         runner = Thread(
             target=app.run_forever,
             kwargs={'num_workers': workers, 'loop': loop, 'debug': debug},
