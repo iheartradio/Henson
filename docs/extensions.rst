@@ -130,6 +130,24 @@ The ``trash`` function can then be registered with the CLI::
 
     $ henson --app APP_PATH sesame trash --help
 
+Additionally, if a command includes a ``quiet`` or ``verbose`` argument, it
+will automatically receive the count of the number of times it was specified
+(e.g., ``-v`` will have the value ``1``, ``-vv`` will have the value ``2``).
+When both arguments are included, they will be added as a mutually exclusive
+group.
+
+.. note::
+
+    Due to how :meth:`argparse <python:argparse.ArgumentParser.add_argument>`
+    handles argument counts, ``quiet`` and ``verbose`` will be set to ``None``
+    rather than ``0`` when the flag isn't specified when the command is
+    invoked.
+
+.. code:: sh
+
+    $ henson --app APP_PATH sesame trash -vvvv
+    $ henson --app APP_PATH sesame trash --quiet
+
 Available Extensions
 ====================
 

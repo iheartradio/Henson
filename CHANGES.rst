@@ -13,6 +13,8 @@ Release TDB
 - Automatically register extensions to a registry on the application
 - Add ``hensoncli`` Sphinx directive to document extensions to the command line
   interface
+- ``henson.cli.run`` and any command line extensions that request it support
+  ``quiet`` and ``verbose`` flags to set verbosity
 
 Version 1.0.0
 -------------
