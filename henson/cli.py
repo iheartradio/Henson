@@ -7,6 +7,7 @@ from contextlib import suppress
 from functools import wraps
 from importlib import find_loader, import_module
 import inspect
+import logging
 import os
 import sys
 from threading import Thread
@@ -101,6 +102,7 @@ def register_commands(namespace, functions, namespace_kwargs=None,
         # retain the order of positional arguments as specified by the
         # function's signature.
         arguments = spec.args + spec.kwonlyargs
+
         for argument in reversed(arguments):
             kwargs = {}
             if argument in spec.kwonlyargs:
@@ -146,15 +148,33 @@ def register_commands(namespace, functions, namespace_kwargs=None,
 def run(application_path: 'the path to the application to run',
         reloader: 'reload the application on changes' = False,
         workers: 'the number of asynchronous tasks to run' = 1,
-        debug: 'enable debug mode' = False):
+        debug: 'enable debug mode' = False,
+        **kwargs):
     """Import and run an application."""
+    if kwargs['quiet']:
+        # If quiet mode has been enabled, set the number of verbose
+        # flags to -1 so that the level above warning will be used.
+        verbosity = -1
+    else:
+        # argparse gives None not 0.
+        verbosity = kwargs['verbose'] or 0
+
+    # Set the log level based on the number of verbose flags. Do this
+    # before the app is imported so any log calls made will respect the
+    # specified level.
+    log_level = logging.WARNING - (verbosity * 10)
+    logging.basicConfig(level=log_level)
+
     import_path, app = _import_application(application_path)
+
+    # Now that we have an application, set it's log level, too.
+    app.logger.setLevel(log_level)
 
     if reloader or debug:
         # If the reloader is requested (or debug is enabled), create
         # threads for running the application and watching the file
         # system for changes.
-        app.logger.debug('Running {!r} with reloader...'.format(app))
+        app.logger.info('Running {!r} with reloader...'.format(app))
 
         # Find the root of the application and watch for changes
         watchdir = os.path.abspath(import_module(import_path).__file__)
@@ -189,7 +209,7 @@ def run(application_path: 'the path to the application to run',
 
     else:
         # If the reloader is not needed, avoid the overhead
-        app.logger.debug('Running {!r} forever...'.format(app))
+        app.logger.info('Running {!r} forever...'.format(app))
         app.run_forever(num_workers=workers, debug=debug)
 
 
@@ -300,12 +320,25 @@ def _with_namespace(f, include_app):
     return inner
 
 
+# Create a parent group so that arguments such as --verbose can be added
+# to all commands.
+parent = ArghParser(add_help=False)
+
+# Create a mutually exclusive group to control the verbosity. verbose
+# and quiet will be provided under kwargs.
+chatter = parent.add_mutually_exclusive_group()
+chatter.add_argument('--verbose', '-v', action='count', help='verbose mode')
+chatter.add_argument('--quiet', '-q', action='count', help='quiet mode')
+
 # Define a parser and add commands to it.
 parser = ArghParser()
+parser.add_argument('--version', action='version', version=__version__)
+
+# Add an argument to import an application to load its CLI extensions.
 parser.add_argument(
     '-a', '--app',
     action=_ApplicationAction,
     help='the path to the application to run',
 )
-parser.add_argument('--version', action='version', version=__version__)
-parser.add_commands([run])
+
+parser.add_commands([run], func_kwargs={'parents': [parent]})
