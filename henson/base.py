@@ -352,12 +352,13 @@ class Application:
                 yield from queue.put(value)
 
     @asyncio.coroutine
-    def _process(self, task, queue, loop):
+    def _process(self, future, queue, loop):
         """Process incoming messages.
 
         Args:
-            task (asyncio.tasks.Task): The task populating ``queue``.
-              The function will exit when it's been cancelled.
+            future (asyncio.Future): The future that, when done, will
+                indicate that the consumer is no longer receiving new
+                messages.
             queue (asyncio.Queue): A queue containing incoming messages
               to be processed.
             loop (asyncio.asyncio.BaseEventLoop): The event loop used by
@@ -369,7 +370,7 @@ class Application:
                 # see if the consumer is done. If it is, exit.
                 # Otherwise yield control back to the event loop and
                 # then try again.
-                if task.done():
+                if future.done():
                     break
 
                 yield from asyncio.sleep(
