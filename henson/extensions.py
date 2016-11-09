@@ -78,6 +78,7 @@ class Extension:
             )
 
         self._app = app
+        self._app.extensions[self.__class__.__name__.lower()] = self
 
     @property
     def app(self):

@@ -19,6 +19,7 @@ class MockApplication(Application):
         """Initialize the instance."""
         super().__init__('testing')
         self.settings = settings
+        self.extensions = {}
 
     def run_forever(self, num_workers=1, loop=None, debug=False):
         """Run the instance."""
