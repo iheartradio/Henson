@@ -24,6 +24,15 @@ def test_app_access_with_no_app_raises_runtimeerror():
         Extension().app
 
 
+def test_extension_registry(test_app):
+    """Test that extensions are automatically registered with the app."""
+    class CustomExtension(Extension):
+        pass
+
+    extension = CustomExtension(test_app)
+    assert test_app.extensions['customextension'] == extension
+
+
 def test_extension_without_default_settings(test_app):
     """Test that an Extension without DEFAULT_SETTINGS doesn't affect app."""
     class CustomExtension(Extension):

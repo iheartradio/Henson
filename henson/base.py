@@ -55,6 +55,8 @@ class Application:
             'teardown': [],
         }
 
+        self.extensions = {}
+
         self.consumer = consumer
 
         self.logger = logging.getLogger(self.name)

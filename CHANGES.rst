@@ -10,6 +10,7 @@ Release TDB
   are no longer needed to allow the memory to be freed up before the next
   message is received.
 - uvloop_ will be used for the event loop if it's installed.
+- Automatically register extensions to a registry on the application
 
 Version 1.0.0
 -------------
