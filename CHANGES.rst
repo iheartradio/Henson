@@ -11,6 +11,8 @@ Release TDB
   message is received.
 - uvloop_ will be used for the event loop if it's installed.
 - Automatically register extensions to a registry on the application
+- Add ``hensoncli`` Sphinx directive to document extensions to the command line
+  interface
 
 Version 1.0.0
 -------------

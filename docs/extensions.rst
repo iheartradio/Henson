@@ -64,10 +64,16 @@ Extending the Command Line
 
 Henson offers an extensible command line interface. To register your own
 commands, use :func:`~henson.cli.register_commands`. Any function passed to it
-will have its usage created directly from its signature. In order to access the
-new commands, the ``henson`` command line utility must be given a reference to
-an :class:`~henson.base.Application`. This is done through the ``--app``
-argument:
+will have its usage created directly from its signature. During the course of
+initializing the application for use with the extension (i.e.,
+:meth:`~henson.extensions.Extension.init_app`), Henson will check for a method
+on the extension's instance named ``register_cli`` and call it. If you place
+any calls to :func:`~henson.cli.register_commands` inside it, the command line
+interface will be extended automatically.
+
+In order to access the new commands, the ``henson`` command line utility must
+be given a reference to an :class:`~henson.base.Application`. This is done
+through the ``--app`` argument:
 
 .. code::
 
