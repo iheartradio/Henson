@@ -1,7 +1,7 @@
 Version 1.1.0
 -------------
 
-Release TDB
+Released 2016-11-11
 
 - Add ``henson.cli.register_commands`` to extend the command line interface
 - Messages are logged using ``logging.DEBUG`` instead of ``logging.INFO``
