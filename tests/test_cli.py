@@ -210,6 +210,78 @@ def test_register_commands_positional(monkeypatch):
     assert args.b == '2'
 
 
+@pytest.mark.parametrize('arguments, expected', (
+    (['-q'], 1),
+    (['-qq'], 2),
+    (['--quiet'], 1),
+    (['--quiet', '--quiet'], 2),
+))
+def test_register_commands_quiet(monkeypatch, arguments, expected):
+    """Test that register_commands handles quiet."""
+    monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
+
+    def verbosity(quiet):
+        pass
+
+    cli.register_commands('testing', [verbosity])
+
+    args = cli.parser.parse_args(['testing', 'verbosity'] + arguments)
+    assert args.quiet == expected
+
+
+@pytest.mark.parametrize('arguments, quiet, verbose', (
+    ('-q', 1, None),
+    ('-qq', 2, None),
+    ('-v', None, 1),
+    ('-vv', None, 2),
+))
+def test_register_commands_quiet_and_verbose(monkeypatch, arguments, quiet,
+                                             verbose):
+    """Test that register_commands handles quiet and verbose."""
+    monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
+
+    def verbosity(quiet, verbose):
+        pass
+
+    cli.register_commands('testing', [verbosity])
+
+    args = cli.parser.parse_args(['testing', 'verbosity', arguments])
+    assert args.quiet == quiet
+    assert args.verbose == verbose
+
+
+def test_register_commands_quiet_and_verbose_together_systemexit(monkeypatch):
+    """Test that register_commands with quiet and verbose raises SystemExit."""
+    monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
+
+    def verbosity(quiet, verbose):
+        pass
+
+    cli.register_commands('testing', [verbosity])
+
+    with pytest.raises(SystemExit):
+        cli.parser.parse_args(['testing', 'verbosity', '-q', '-v'])
+
+
+@pytest.mark.parametrize('arguments, expected', (
+    (['-v'], 1),
+    (['-vv'], 2),
+    (['--verbose'], 1),
+    (['--verbose', '--verbose'], 2),
+))
+def test_register_commands_verbose(monkeypatch, arguments, expected):
+    """Test that register_commands handles quiet."""
+    monkeypatch.setattr(cli, 'parser', ArghParser('testing'))
+
+    def verbosity(verbose):
+        pass
+
+    cli.register_commands('testing', [verbosity])
+
+    args = cli.parser.parse_args(['testing', 'verbosity'] + arguments)
+    assert args.verbose == expected
+
+
 def test_run_forever(good_mock_service, cli_kwargs, caplog, capsys):
     """Test that run_forever is called on the imported app."""
     cli.run('good_import:app', **cli_kwargs)

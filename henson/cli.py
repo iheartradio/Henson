@@ -3,6 +3,7 @@
 from argparse import Action
 import asyncio
 from collections import Counter
+from copy import deepcopy
 from contextlib import suppress
 from functools import wraps
 from importlib import find_loader, import_module
@@ -53,6 +54,9 @@ def register_commands(namespace, functions, namespace_kwargs=None,
     """
     commands = []
 
+    if func_kwargs is None:
+        func_kwargs = {}
+
     for function in functions:
         # Inspect the function first. While everything it returns can be
         # captured from the function object itself, the function will be
@@ -102,6 +106,32 @@ def register_commands(namespace, functions, namespace_kwargs=None,
         # retain the order of positional arguments as specified by the
         # function's signature.
         arguments = spec.args + spec.kwonlyargs
+
+        # Set up the keyword argument overrides.
+        func_kwargs = deepcopy(func_kwargs)
+
+        # First, check for verbosity-related arguments since those are
+        # handled in a special way. Remove any that are found from the
+        # list of all arguments so they aren't processed again later.
+        if any(arg in arguments for arg in ('quiet', 'verbose')):
+            if 'quiet' not in arguments:
+                # Add just the verbose argument.
+                decorator = arg(
+                    '--verbose', '-v', action='count', help='verbose mode')
+                function = decorator(function)
+            elif 'verbose' not in arguments:
+                # Add just the quiet argument.
+                decorator = arg(
+                    '--quiet', '-q', action='count', help='quiet mode')
+                function = decorator(function)
+            else:
+                # Add the mutually exclusive group (through parent).
+                func_kwargs['parents'] = [parent]
+
+            with suppress(ValueError):
+                arguments.remove('verbose')
+            with suppress(ValueError):
+                arguments.remove('quiet')
 
         for argument in reversed(arguments):
             kwargs = {}
