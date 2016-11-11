@@ -1,3 +1,8 @@
+Version 1.2.0
+-------------
+
+Release TBD
+
 Version 1.1.0
 -------------
 
