@@ -23,12 +23,22 @@ class HensonCLIDirective(AutoprogramDirective):
            :start_command: db
 
     .. versionadded:: 1.1.0
+
+    .. versionchanged:: 1.2.0
+
+        The ``prog`` option will default to the proper way to invoke
+        command line extensions.
     """
 
     def prepare_autoprogram(self):
         """Prepare the instance to be run through autoprogram."""
         # Tell autoprogram how to find the argument parser.
         self.arguments = 'henson.cli:parser',
+
+        # Most Henson CLI extensions will be invoked the same way. The
+        # extension authors shouldn't have to include that in their
+        # Sphinx documentation.
+        self.options.setdefault('prog', 'henson --app APP_PATH')
 
     def register_cli(self):
         """Register the CLI."""

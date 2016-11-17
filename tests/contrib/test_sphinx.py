@@ -42,13 +42,26 @@ def test_directive(test_module):
     )
 
 
-def test_hensoncliextensiondirective_sets_parser(test_directive):
+def test_hensonclidirective_doesnt_change_prog(test_directive):
+    """Test that HensonCLIDirective.prepare_autoprogram doesn't change prog."""
+    test_directive.options['prog'] = 'testing'
+    test_directive.prepare_autoprogram()
+    assert test_directive.options['prog'] == 'testing'
+
+
+def test_hensonclidirective_sets_parser(test_directive):
     """Test that HensonCLIDirective.prepare_autoprogram sets the parser."""
     test_directive.prepare_autoprogram()
     assert test_directive.arguments == ('henson.cli:parser',)
 
 
-def test_hensoncliextentiondirective_register_cli(test_directive):
+def test_hensonclidirective_sets_prog(test_directive):
+    """Test that HensonCLIDirective.prepare_autoprogram sets prog."""
+    test_directive.prepare_autoprogram()
+    assert test_directive.options['prog'] == 'henson --app APP_PATH'
+
+
+def test_hensonclidirective_register_cli(test_directive):
     """Test that HensonCLIDirective.register_cli doesn't fail."""
     # This will only test that it runs without raising an exception.
     test_directive.register_cli()
