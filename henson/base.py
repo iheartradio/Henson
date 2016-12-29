@@ -161,6 +161,12 @@ class Application:
         Raises:
             TypeError: If the consumer is None or the callback isn't a
                 coroutine.
+
+        .. versionchanged:: 1.2
+
+            Unhandled exceptions resulting from processing a message
+            while the consumer is still active will stop cause the
+            application to shut down gracefully.
         """
         if self.consumer is None:
             raise TypeError("The Application's consumer cannot be None.")
@@ -219,18 +225,20 @@ class Application:
         future = asyncio.gather(*tasks, loop=loop)
 
         try:
-            # Run the loop until the consumer says to stop.
-            loop.run_until_complete(consumer)
+            # Run the loop until the consumer says to stop or message
+            # processing fails.
+            loop.run_until_complete(
+                asyncio.gather(consumer, future, loop=loop))
         except BaseException as e:
             self.logger.error(e)
-
+        finally:
             # If something went wrong, cancel the consumer. This will
             # alert the processors to stop once the queue is empty.
             consumer.cancel()
-        finally:
-            # Run the loop until the future completes. This will allow
-            # the tasks to finish processing all of the messages in the
-            # queue and then exit cleanly.
+
+            # Run the loop until message processing completes. This will
+            # allow the tasks to finish processing all of the messages
+            # in the queue and then exit cleanly.
             loop.run_until_complete(future)
 
             # Check for any exceptions that may have been raised by the
