@@ -162,7 +162,7 @@ class Application:
             TypeError: If the consumer is None or the callback isn't a
                 coroutine.
 
-        .. versionchanged:: 1.2
+        .. versionchanged:: 2.0
 
             Unhandled exceptions resulting from processing a message
             while the consumer is still active will stop cause the
@@ -374,7 +374,7 @@ class Application:
             loop (asyncio.asyncio.BaseEventLoop): The event loop used by
                 the application.
 
-        .. versionchanged:: 1.2
+        .. versionchanged:: 2.0
 
             Postprocess callbacks run inside the same try block as
             other callbacks so that exceptions can be handled.

@@ -20,7 +20,7 @@ def read(filename):
 
 setup(
     name='Henson',
-    version='1.2.0',
+    version='2.0.0',
     author='Andy Dirnberger, Jon Banafato, and others',
     author_email='henson@iheart.com',
     url='https://henson.readthedocs.io',
