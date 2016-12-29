@@ -373,6 +373,11 @@ class Application:
               to be processed.
             loop (asyncio.asyncio.BaseEventLoop): The event loop used by
                 the application.
+
+        .. versionchanged:: 1.2
+
+            Postprocess callbacks run inside the same try block as
+            other callbacks so that exceptions can be handled.
         """
         while True:
             if queue.empty():
@@ -398,6 +403,8 @@ class Application:
                 self.logger.debug('message.preprocessed')
 
                 results = yield from self.callback(self, message)
+
+                yield from self._postprocess_results(results)
             except Abort as e:
                 yield from self._abort(e)
             except Exception as e:
@@ -410,8 +417,6 @@ class Application:
                         yield from callback(self, message, e)
                     except Abort:
                         break
-            else:
-                yield from self._postprocess_results(results)
             finally:
                 # Don't use _apply_callbacks here since we want to pass
                 # the original message into each callback.
