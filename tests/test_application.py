@@ -36,13 +36,13 @@ def test_apply_callbacks(original, expected):
     assert callback2_called
 
 
-def test_consume(event_loop, test_consumer, cancelled_future):
+def test_consume(event_loop, test_consumer):
     """Test Application._consume."""
     queue = asyncio.Queue(maxsize=1)
 
     app = Application('testing', consumer=test_consumer)
 
-    asyncio.async(app._consume(queue, cancelled_future))
+    asyncio.async(app._consume(queue))
 
     event_loop.stop()  # Run the event loop once.
     event_loop.run_forever()

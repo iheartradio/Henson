@@ -209,10 +209,8 @@ class Application:
         # for each processing task.
         queue = asyncio.Queue(maxsize=num_workers, loop=loop)
 
-        # Create a future to control consumption and create a task for
-        # the consumer to run in.
-        consumer = asyncio.Future(loop=loop)
-        loop.create_task(self._consume(queue, consumer))
+        # Create a task to monitor the consumer.
+        consumer = loop.create_task(self._consume(queue))
 
         # Create tasks to process each message received by the
         # consumer and wrap them inside a future. When the loop stops
@@ -332,7 +330,7 @@ class Application:
         return value
 
     @asyncio.coroutine
-    def _consume(self, queue, future):
+    def _consume(self, queue):
         """Read in incoming messages.
 
         Messages will be read from the consumer until it raises an
@@ -342,8 +340,6 @@ class Application:
             queue (asyncio.Queue): Any messages read in by the consumer
                 will be added to the queue to share them with any future
                 processing the messages.
-            future (asyncio.Future): When the consumer tells the
-                application to stop, this future will be cancelled.
         """
         while True:
             # Read messages and add them to the queue.
@@ -351,13 +347,7 @@ class Application:
                 value = yield from self.consumer.read()
             except Abort:
                 self.logger.debug('consumer.aborted')
-                future.cancel()
                 return
-            except Exception as e:
-                # If the consumer fails, set the exception on the future
-                # so that the loop will stop running and the application
-                # will shut down.
-                future.set_exception(e)
             else:
                 yield from queue.put(value)
 
