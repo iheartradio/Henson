@@ -3,6 +3,9 @@ Version 1.2.0
 
 Release TBD
 
+- Unhandled exceptions raised while processing a message will stop the
+  application
+
 Version 1.1.0
 -------------
 
