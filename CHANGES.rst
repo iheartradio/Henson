@@ -5,6 +5,7 @@ Release TBD
 
 - Unhandled exceptions raised while processing a message will stop the
   application
+- Set the event loop when running with the reloader
 
 Version 1.1.0
 -------------
