@@ -17,8 +17,9 @@ class Abort(Exception):
     Args:
         reason (str): The reason the message is being aborted. It should
             be in the form of "noun.verb" (e.g., "provider.ignored").
-        message: The message that is being aborted. Usually this will be
-            the incoming message, but it can also be the result.
+        message (~typing.Any): The message that is being aborted.
+            Usually this will be the incoming message, but it can also
+            be the result.
     """
 
     def __init__(self, reason, message):

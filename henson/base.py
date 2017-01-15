@@ -21,17 +21,16 @@ class Application:
 
     Args:
         name (str): The name of the application.
-        settings (Optional[object]): An object with attributed-based
+        settings (~typing.Optional[~typing.Any]): An object with attributed-based
             settings.
-        consumer (optional): Any object that is an iterator or an
+        consumer (~typing.Optional): ~typing.Any object that is an iterator or an
             iterable and yields instances of any type that is supported
             by ``callback``. While this isn't required, it must be
             provided before the application can be run.
-        callback (Optional[asyncio.coroutine]): A callable object that
-            takes two arguments, an instance of
-            :class:`henson.base.Application` and the (possibly)
-            preprocessed incoming message.  While this isn't required,
-            it must be provided before the application can be run.
+        callback (~typing.Optional[~typing.Coroutine(Application, ~typing.Any)]): A
+            coroutine that will be called once for each (possibly)
+            preprocessed message received. While optional, it must be
+            provided before the application can be run.
     """
 
     def __init__(self, name, settings=None, *, consumer=None, callback=None):
@@ -71,15 +70,12 @@ class Application:
         """Register an error callback.
 
         Args:
-            callback (asyncio.coroutine): A callable object that takes
-                three arguments: an instance of
-                :class:`henson.base.Application`, the incoming message,
-                and the exception that was raised. It will be called any
-                time there is an exception while reading a message from
-                the queue.
+            callback (~typing.Coroutine(Application, ~typing.Any, Exception)):
+                A coroutine that will be called any time there is an
+                exception while reading a message from the queue.
 
         Returns:
-            asyncio.coroutine: The callback.
+            ~typing.Coroutine: The callback.
 
         Raises:
             TypeError: If the callback isn't a coroutine.
@@ -91,14 +87,13 @@ class Application:
         """Register a message acknowledgement callback.
 
         Args:
-            callback (asyncio.coroutine): A callable object that takes
-                two arguments: an instance of
-                :class:`henson.base.Application` and the original
-                incoming message as its only argument. It will be called
-                once a message has been fully processed.
+            callback (~typing.Coroutine(Application, ~typing.Any)): A
+                coroutine that will be called once a message has been
+                fully processed. It will be called with the original
+                incoming message.
 
         Returns:
-            asyncio.coroutine: The callback.
+            ~typing.Coroutine: The callback.
 
         Raises:
             TypeError: If the callback isn't a coroutine.
@@ -110,14 +105,12 @@ class Application:
         """Register a message preprocessing callback.
 
         Args:
-            callback (asyncio.coroutine): A callable object that takes
-                two arguments: an instance of
-                :class:`henson.base.Application` and the incoming
-                message. It will be called for each incoming message
+            callback (~typing.Coroutine(Application, ~typing.Any)): A
+                coroutine that will be called for each incoming message
                 with its result being passed to ``callback``.
 
         Returns:
-            asyncio.coroutine: The callback.
+            ~typing.Coroutine: The callback.
 
         Raises:
             TypeError: If the callback isn't a coroutine.
@@ -129,14 +122,12 @@ class Application:
         """Register a result postprocessing callback.
 
         Args:
-            callback (asyncio.coroutine): A callable object that takes
-                two arguments: an instance of
-                :class:`henson.base.Application` and a result of
-                processing the incoming message. It will be called for
-                each result returned from ``callback``.
+            callback (~typing.Coroutine(Application, ~typing.Any)): A
+                coroutine that will be called for each result returned
+                from ``callback``.
 
         Returns:
-            asyncio.coroutine: The callback.
+            ~typing.Coroutine: The callback.
 
         Raises:
             TypeError: If the callback isn't a coroutine.
@@ -148,14 +139,14 @@ class Application:
         """Consume from the consumer until interrupted.
 
         Args:
-            num_workers (Optional[int]): The number of asynchronous
+            num_workers (~typing.Optional[int]): The number of asynchronous
                 tasks to use to process messages received through the
                 consumer.  Defaults to 1.
-            loop (Optional[asyncio.asyncio.BaseEventLoop]): An event
+            loop (~typing.Optional[asyncio.asyncio.BaseEventLoop]): An event
                 loop that, if provided, will be used for running the
                 application. If none is provided, the default event loop
                 will be used.
-            debug (Optional[bool]): Whether or not to run with debug
+            debug (~typing.Optional[bool]): Whether or not to run with debug
                 mode enabled. Defaults to True.
 
         Raises:
@@ -262,13 +253,12 @@ class Application:
         """Register a startup callback.
 
         Args:
-            callback (asyncio.coroutine): A callable object that takes
-                an instance of :class:`~henson.base.Application` as its
-                only argument. It will be called once when the
-                application first starts up.
+            callback (~typing.Coroutine(Application)): A coroutine
+                that will be called once when the application is
+                starting up.
 
         Returns:
-            asyncio.coroutine: The callback.
+            ~typing.Coroutine: The callback.
 
         Raises:
             TypeError: If the callback isn't a coroutine.
@@ -280,13 +270,12 @@ class Application:
         """Register a teardown callback.
 
         Args:
-            callback (asyncio.coroutine): A callable object that takes
-                an instance of :class:`~henson.base.Application` as its
-                only argument. It will be called once when the
-                application is shutting down.
+            callback (~typing.Coroutine(Application)): A coroutine
+                that will be called once when the application is
+                shutting down.
 
         Returns:
-            asyncio.coroutine: The callback.
+            ~typing.Coroutine: The callback.
 
         Raises:
             TypeError: If the callback isn't a coroutine.
@@ -318,7 +307,7 @@ class Application:
         next callback.
 
         Args:
-            callbacks (List[callable]): The callbacks to apply to the
+            callbacks (List[~typing.Coroutine]): The coroutines to apply to the
                 provided arguments.
             value: The value to pass to the first callback.
 
@@ -337,7 +326,7 @@ class Application:
         :class:`~henson.exceptions.Abort` exception.
 
         Args:
-            queue (asyncio.Queue): Any messages read in by the consumer
+            queue (asyncio.Queue): ~typing.Any messages read in by the consumer
                 will be added to the queue to share them with any future
                 processing the messages.
         """
@@ -446,7 +435,7 @@ class Application:
         """Register a callback.
 
         Args:
-            callback (asyncio.coroutine): The callback to register.
+            callback (~typing.Coroutine): The callback to register.
             callback_container (str): The name of the container onto
                 which to append the callback.
 

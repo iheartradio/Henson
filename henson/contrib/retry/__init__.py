@@ -78,7 +78,7 @@ def _retry(app, message, exc):
     been reached.
 
     Args:
-        app (henson.base.Application): The current application.
+        app (~henson.base.Application): The current application.
         message (dict): The message to be retried.
         exc (Exception): The exception that caused processing the
             message to fail.
@@ -165,7 +165,7 @@ class Retry(Extension):
         """Initialize an ``Application`` instance.
 
         Args:
-            app (henson.base.Application): Application instance to be
+            app (~henson.base.Application): Application instance to be
                 initialized.
 
         Raises:

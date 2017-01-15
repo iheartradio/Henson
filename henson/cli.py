@@ -39,9 +39,10 @@ def register_commands(namespace, functions, namespace_kwargs=None,
     Args:
         namespace (str): A name representing the group of commands. The
             namespace is required to access the commands being added.
-        functions (List[callable]): A list of callables that are used to
-            create subcommands. More details can be found in the
-            documentation for :func:`~argh.assembling.add_commands`.
+        functions (~typing.List[~typing.Callable]): A list of callables
+            that are used to create subcommands. More details can be
+            found in the documentation for
+            :func:`~argh.assembling.add_commands`.
 
     .. note::
 
@@ -263,8 +264,8 @@ def _import_application(application_path):
             application. It should be in the form of ``PATH[:APP]``.
 
     Returns:
-        Tuple[str, henson.base.Application]: A two-tuple containing the
-            import path and the imported application.
+        ~typing.Tuple[str, ~henson.base.Application]: A two-tuple
+            containing the import path and the imported application.
     """
     # Add the present working directory to the import path so that
     # services can be found without installing them to site-packages

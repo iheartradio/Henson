@@ -13,7 +13,8 @@ class Config(dict):
         and update the existing settings.
 
         Args:
-            mapping (dict): A mapping encapsulating settings.
+            mapping (~typing.Dict[str, ~typing.Any]): A mapping
+                encapsulating settings.
         """
         for key, value in mapping.items():
             self[key] = value
@@ -25,8 +26,8 @@ class Config(dict):
         extend and update the existing settings.
 
         Args:
-            obj: An object encapsulating settings. This will typically
-              be a module or class.
+            obj (~typing.Any): An object encapsulating settings. This
+                will typically be a module or class.
         """
         for key in dir(obj):
             if key.isupper():

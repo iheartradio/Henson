@@ -7,9 +7,9 @@ class Extension:
     """A base class for Hension extensions.
 
     Args:
-        app (Optional[henson.base.Application]): An application instance
-            that has an attribute named settings that contains a mapping
-            of settings to interact with a database.
+        app (~typing.Optional[~henson.base.Application]): An application
+            instance that has an attribute named settings that contains
+            a mapping of settings to interact with a database.
     """
 
     def __init__(self, app=None):
@@ -21,8 +21,8 @@ class Extension:
         application is usable.
 
         Args:
-            app (Optional[henson.base.Application]): An application
-                instance that will be initialized.
+            app (~typing.Optional[~henson.base.Application]): An
+                application instance that will be initialized.
         """
         self._app = None
 
@@ -60,7 +60,7 @@ class Extension:
         required settings.
 
         Args:
-            app (henson.base.Application): An application instance that
+            app (~henson.base.Application): An application instance that
                 will be initialized.
         """
         for key, value in self.DEFAULT_SETTINGS.items():
