@@ -18,7 +18,7 @@ from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 
 from . import __version__
-from .base import Application, _new_event_loop
+from .base import Application
 
 __all__ = ('register_commands',)
 
@@ -212,10 +212,9 @@ def run(application_path: 'the path to the application to run',
 
         # Create observer and runner threads
         observer = Observer()
-        loop = _new_event_loop()
         runner = Thread(
             target=app.run_forever,
-            kwargs={'num_workers': workers, 'loop': loop, 'debug': debug},
+            kwargs={'num_workers': workers, 'debug': debug},
         )
 
         # This function is called by watchdog event handler when changes

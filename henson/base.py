@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 import logging
+import os
 import sys
 import traceback
 
@@ -315,6 +316,11 @@ class PooledApplication(Application):
         if num_workers == 0:
             num_workers = None
 
+        self.logger.info(
+            'application.running',
+            workers=num_workers if num_workers else os.cpu_count(),
+        )
+
         if debug:
             self.settings['DEBUG'] = True
         if self.settings['DEBUG']:
@@ -337,6 +343,7 @@ class PooledApplication(Application):
         self.logger.debug('application.stopped')
 
     def _consume(self, pool):
+        self.logger.debug('consuming')
         while True:
             try:
                 value = self.consumer.read()
