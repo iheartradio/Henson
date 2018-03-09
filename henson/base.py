@@ -83,6 +83,7 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
+
         """
         self._register_callback(callback, 'error')
         return callback
@@ -102,6 +103,7 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
+
         """
         self._register_callback(callback, 'message_acknowledgement')
         return callback
@@ -121,6 +123,7 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
+
         """
         self._register_callback(callback, 'message_preprocessor')
         return callback
@@ -140,6 +143,7 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
+
         """
         self._register_callback(callback, 'result_postprocessor')
         return callback
@@ -167,6 +171,7 @@ class Application:
             Unhandled exceptions resulting from processing a message
             while the consumer is still active will stop cause the
             application to shut down gracefully.
+
         """
         if self.consumer is None:
             raise TypeError("The Application's consumer cannot be None.")
@@ -272,6 +277,7 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
+
         """
         self._register_callback(callback, 'startup')
         return callback
@@ -290,6 +296,7 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
+
         """
         self._register_callback(callback, 'teardown')
         return callback
@@ -324,6 +331,7 @@ class Application:
 
         Returns:
             The return value of the final callback.
+
         """
         for callback in callbacks:
             value = yield from callback(self, value)
@@ -452,6 +460,7 @@ class Application:
 
         Raises:
             TypeError: If the callback isn't a coroutine.
+
         """
         if not asyncio.iscoroutinefunction(callback):
             raise TypeError('The callback must be a coroutine.')
@@ -482,6 +491,7 @@ def _new_event_loop():
 
     Returns:
         asyncio.AbstractEventLoopPolicy: The new event loop.
+
     """
     try:
         import uvloop
