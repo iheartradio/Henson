@@ -265,6 +265,7 @@ def _import_application(application_path):
     Returns:
         Tuple[str, henson.base.Application]: A two-tuple containing the
             import path and the imported application.
+
     """
     # Add the present working directory to the import path so that
     # services can be found without installing them to site-packages

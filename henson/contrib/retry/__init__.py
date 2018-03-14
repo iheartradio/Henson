@@ -26,6 +26,7 @@ def _calculate_delay(delay, backoff, number_of_retries):
 
     Returns:
         numbers.Number: The amount of time to wait.
+
     """
     backoff_factor = backoff ** number_of_retries
     return delay * backoff_factor
@@ -43,6 +44,7 @@ def _exceeded_threshold(number_of_retries, maximum_retries):
     Returns:
         bool: True if the maximum number of retry attempts have already
             been made.
+
     """
     if maximum_retries is None:
         # Retry forever.
@@ -60,6 +62,7 @@ def _exceeded_timeout(start_time, duration):
 
     Returns:
         bool: True if the timeout has passed.
+
     """
     if duration is None:
         # Retry forever.
@@ -85,6 +88,7 @@ def _retry(app, message, exc):
 
     Raises:
         Abort: If the message is scheduled to be retried.
+
     """
     if not isinstance(exc, app.settings['RETRY_EXCEPTIONS']):
         # If the exception raised isn't retryable, return control so the
@@ -135,6 +139,7 @@ def _retry_info(message):
 
     Returns:
         dict: The retry attempt information.
+
     """
     info = message.get('_retry', {})
     info.setdefault('count', 0)
@@ -171,6 +176,7 @@ class Retry(Extension):
         Raises:
             TypeError: If the callback isn't a coroutine.
             ValueError: If the delay or backoff is negative.
+
         """
         super().init_app(app)
 
