@@ -36,6 +36,7 @@ setup(
     ],
     extras_require={
         'sphinx': [
+            'sphinx<1.7.1',
             'sphinxcontrib-autoprogram>=0.1.3',
         ],
     },
