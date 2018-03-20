@@ -205,7 +205,9 @@ class Application:
             # log level was set to something lower than DEBUG, don't
             # change it.
             loop.set_debug(True)
-            self.logger.setLevel(min(self.logger.level, logging.DEBUG))
+            self.logger.setLevel(
+                min(self.logger.getEffectiveLevel(), logging.DEBUG)
+            )
 
         self.logger.debug('application.started')
 
