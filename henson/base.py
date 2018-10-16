@@ -402,7 +402,7 @@ class Application:
                 yield from self._abort(e)
             except Exception as e:
                 self.logger.error('message.failed', exc_info=sys.exc_info(),
-                                  message=original_message)
+                                  extra={"original_message": original_message})
 
                 for callback in self._callbacks['error']:
                     # Any callback can prevent execution of further
