@@ -30,7 +30,7 @@ class Extension:
             self.init_app(app)
 
     @property
-    def DEFAULT_SETTINGS(self):  # NOQA
+    def DEFAULT_SETTINGS(self):  # NOQA: D401,N802
         """A ``dict`` of default settings for the extension.
 
         When a setting is not specified by the application instance and
@@ -41,7 +41,7 @@ class Extension:
         return {}
 
     @property
-    def REQUIRED_SETTINGS(self):  # NOQA
+    def REQUIRED_SETTINGS(self):  # NOQA: D401,N802
         """An ``iterable`` of required settings for the extension.
 
         When an extension has required settings that do not have default

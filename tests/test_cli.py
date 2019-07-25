@@ -286,7 +286,7 @@ def test_run_forever(good_mock_service, cli_kwargs, caplog, capsys):
     """Test that run_forever is called on the imported app."""
     cli.run('good_import:app', **cli_kwargs)
     out, _ = capsys.readouterr()
-    assert 'Running <Application: testing> forever' in caplog.text()
+    assert 'Running <Application: testing> forever' in caplog.text
     assert 'Run, Forrest, run!' in out
 
 
@@ -294,5 +294,5 @@ def test_run_with_reloader(good_mock_service, cli_kwargs, caplog, capsys):
     """Test that an app is run with the reloader."""
     cli.run('good_import:app', reloader=True, **cli_kwargs)
     out, _ = capsys.readouterr()
-    assert 'Running <Application: testing> with reloader' in caplog.text()
+    assert 'Running <Application: testing> with reloader' in caplog.text
     assert 'Run, Forrest, run!' in out
