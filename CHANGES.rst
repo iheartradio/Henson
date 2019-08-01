@@ -1,3 +1,11 @@
+Version 2.0.0
+-------------
+
+Released 2019-08-01
+
+- Add support for Python 3.7
+- Deprecate support for Python 3.4
+
 Version 1.2.0
 -------------
 
