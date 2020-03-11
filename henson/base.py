@@ -1,6 +1,7 @@
 """Implementation of the service."""
 
 import asyncio
+import queue as sync_queue
 from contextlib import suppress
 from copy import deepcopy
 import logging
@@ -43,6 +44,7 @@ class Application:
         self.settings.from_object(settings or {})
         self.settings.setdefault('DEBUG', False)
         self.settings.setdefault('SLEEP_TIME', 0.1)
+        self.settings.setdefault('ASYNC_QUEUE', True)
 
         # Callbacks
         self.callback = callback
@@ -214,7 +216,11 @@ class Application:
         # Create an asynchronous queue to pass the messages from the
         # consumer to the processor. The queue should hold one message
         # for each processing task.
-        queue = asyncio.Queue(maxsize=num_workers, loop=loop)
+
+        if self.settings['ASYNC_QUEUE']:
+            queue = asyncio.Queue(maxsize=num_workers, loop=loop)
+        else:
+            queue = sync_queue.Queue()
 
         # Create a task to monitor the consumer.
         consumer = loop.create_task(self._consume(queue))
@@ -363,7 +369,10 @@ class Application:
                 self.logger.debug('consumer.aborted')
                 return
             else:
-                yield from queue.put(value)
+                if self.settings["ASYNC_QUEUE"]:
+                    yield from queue.put(value)
+                else:
+                    queue.put(value)
 
     @asyncio.coroutine
     def _process(self, future, queue, loop):
@@ -391,7 +400,10 @@ class Application:
                     self.settings['SLEEP_TIME'], loop=loop)
                 continue
 
-            message = yield from queue.get()
+            if self.settings["ASYNC_QUEUE"]:
+                message = yield from queue.get()
+            else:
+                message = queue.get()
             # Save a copy of the original message in case its needed
             # later.
             original_message = deepcopy(message)

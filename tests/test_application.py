@@ -1,16 +1,14 @@
-"""Test Application."""
-
 import asyncio
-
 import pytest
+import queue as sync_queue
 
 from henson.base import Application
 from henson.exceptions import Abort
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('original, expected', ((1, 4), (2, 6)))
-def test_apply_callbacks(original, expected):
+@pytest.mark.parametrize('original, expected, ASYNC_QUEUE', ((1, 4, True), (2, 6, True), (1, 4, False), (2, 6, False)))
+def test_apply_callbacks(original, expected, ASYNC_QUEUE):
     """Test Application._apply_callbacks."""
     callback1_called = False
     callback2_called = False
@@ -27,7 +25,7 @@ def test_apply_callbacks(original, expected):
         callback2_called = True
         return message * 2
 
-    app = Application('testing')
+    app = Application('testing', settings={'ASYNC_QUEUE': ASYNC_QUEUE})
 
     actual = yield from app._apply_callbacks([callback1, callback2], original)
     assert actual == expected
@@ -36,11 +34,16 @@ def test_apply_callbacks(original, expected):
     assert callback2_called
 
 
-def test_consume(event_loop, test_consumer):
+@pytest.mark.parametrize('ASYNC_QUEUE', (True, False))
+def test_consume(event_loop, test_consumer, ASYNC_QUEUE):
     """Test Application._consume."""
-    queue = asyncio.Queue(maxsize=1)
+    if ASYNC_QUEUE:
+        queue = asyncio.Queue(maxsize=1)
+    else:
+        queue = sync_queue.Queue(maxsize=1)
 
-    app = Application('testing', consumer=test_consumer)
+    app = Application('testing', settings={
+                      "ASYNC_QUEUE": ASYNC_QUEUE}, consumer=test_consumer)
 
     asyncio.ensure_future(app._consume(queue), loop=event_loop)
 
@@ -52,7 +55,8 @@ def test_consume(event_loop, test_consumer):
     assert queue.qsize() == 1
 
 
-def test_consumer_aborts(event_loop):
+@pytest.mark.parametrize('ASYNC_QUEUE', (True, False))
+def test_consumer_aborts(event_loop, ASYNC_QUEUE):
     """Test that the application stops after the consumer aborts."""
     consumer_called = False
     callback_called = False
@@ -71,14 +75,16 @@ def test_consumer_aborts(event_loop):
         while True:
             yield from asyncio.sleep(0)
 
-    app = Application('testing', consumer=Consumer(), callback=callback)
+    app = Application('testing', consumer=Consumer(), callback=callback,
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     app.run_forever(loop=event_loop)
 
     assert consumer_called
     assert not callback_called
 
 
-def test_consumer_exception(event_loop):
+@pytest.mark.parametrize('ASYNC_QUEUE', (True, False))
+def test_consumer_exception(event_loop, ASYNC_QUEUE):
     """Test that the application stops after a consumer exception."""
     consumer_called = False
     callback_called = False
@@ -95,53 +101,61 @@ def test_consumer_exception(event_loop):
         nonlocal callback_called
         callback_called = True
 
-    app = Application('testing', consumer=Consumer(), callback=callback)
+    app = Application('testing', consumer=Consumer(), callback=callback,
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     app.run_forever(loop=event_loop)
 
     assert consumer_called
     assert not callback_called
 
 
-def test_consumer_is_none_typeerror():
+@pytest.mark.parametrize('ASYNC_QUEUE', (True, False))
+def test_consumer_is_none_typeerror(ASYNC_QUEUE):
     """Test TypeError is raised if the consumer is None."""
-    app = Application('testing', consumer=None)
+    app = Application('testing', consumer=None,
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     with pytest.raises(TypeError):
         app.run_forever()
 
 
-@pytest.mark.parametrize('callback', (None, '', False, 10, sum))
-def test_callback_not_coroutine_typerror(callback):
+@pytest.mark.parametrize('callback, ASYNC_QUEUE', ((None, True), ('', True), (False, True), (10, True), (sum, True), (None, False), ('', False), (False, False), (10, False), (sum, False)))
+def test_callback_not_coroutine_typerror(callback, ASYNC_QUEUE):
     """Test TypeError is raised if callback isn't a coroutine."""
-    app = Application('testing', consumer=[], callback=callback)
+    app = Application('testing', consumer=[], callback=callback,
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     with pytest.raises(TypeError):
         app.run_forever()
 
 
-@pytest.mark.parametrize('error_callback', (None, '', False, 10, sum))
-def test_error_not_coroutine_typeerror(error_callback):
+@pytest.mark.parametrize('error_callback, ASYNC_QUEUE', ((None, True), ('', True), (False, True), (10, True), (sum, True), (None, False), ('', False), (False, False), (10, False), (sum, False)))
+def test_error_not_coroutine_typeerror(error_callback, ASYNC_QUEUE):
     """Test TypeError is raised if error callback isn't a coroutine."""
-    app = Application('testing')
+    app = Application('testing',
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     with pytest.raises(TypeError):
         app.error(error_callback)
 
 
-@pytest.mark.parametrize('acknowledgement', (None, '', False, 10, sum))
-def test_message_acknowledgement_not_coroutine_typeerror(acknowledgement):
+@pytest.mark.parametrize('acknowledgement, ASYNC_QUEUE', ((None, True), ('', True), (False, True), (10, True), (sum, True), (None, False), ('', False), (False, False), (10, False), (sum, False)))
+def test_message_acknowledgement_not_coroutine_typeerror(acknowledgement, ASYNC_QUEUE):
     """Test TypeError is raised if acknowledgement isn't a coroutine."""
-    app = Application('testing')
+    app = Application('testing',
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     with pytest.raises(TypeError):
         app.message_acknowledgement(acknowledgement)
 
 
+@pytest.mark.parametrize('ASYNC_QUEUE', (True, False))
 def test_message_acknowledgement_original_message(event_loop, coroutine,
-                                                  cancelled_future, queue):
+                                                  cancelled_future, queue, ASYNC_QUEUE):
     """Test that original message is acknowledged."""
     actual = ''
 
     expected = 'original'
     queue.put_nowait(expected)
 
-    app = Application('testing', callback=coroutine)
+    app = Application('testing', callback=coroutine,
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
 
     @app.message_preprocessor
     @asyncio.coroutine
@@ -160,22 +174,24 @@ def test_message_acknowledgement_original_message(event_loop, coroutine,
     assert actual == expected
 
 
-@pytest.mark.parametrize('preprocess', (None, '', False, 10, sum))
-def test_message_preprocessor_not_coroutine_typeerror(preprocess):
+@pytest.mark.parametrize('preprocess, ASYNC_QUEUE', ((None, True), ('', True), (False, True), (10, True), (sum, True), (None, False), ('', False), (False, False), (10, False), (sum, False)))
+def test_message_preprocessor_not_coroutine_typeerror(preprocess, ASYNC_QUEUE):
     """Test TypeError is raised if preprocessor isn't a coroutine."""
-    app = Application('testing')
+    app = Application('testing',
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     with pytest.raises(TypeError):
         app.message_preprocessor(preprocess)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('original, expected', ((1, 2), (2, 3)))
-def test_postprocess_results(original, expected):
+@pytest.mark.parametrize('original, expected, ASYNC_QUEUE', ((1, 2, True), (1, 2, False), (2, 3, True), (2, 3, False)))
+def test_postprocess_results(original, expected, ASYNC_QUEUE):
     """Test Application._postprocess_results."""
     callback1_called = False
     callback2_called = False
 
-    app = Application('testing')
+    app = Application('testing',
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
 
     @app.result_postprocessor
     @asyncio.coroutine
@@ -199,13 +215,15 @@ def test_postprocess_results(original, expected):
     assert callback2_called
 
 
-def test_process_exception_stops_application(event_loop, test_consumer):
+@pytest.mark.parametrize('ASYNC_QUEUE', (True, False))
+def test_process_exception_stops_application(event_loop, test_consumer, ASYNC_QUEUE):
     """Test that the application stops after a processing exception."""
     @asyncio.coroutine
     def callback(app, message):
         return [{}]
 
-    app = Application('testing', consumer=test_consumer, callback=callback)
+    app = Application('testing', consumer=test_consumer, callback=callback,
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
 
     @app.result_postprocessor
     @asyncio.coroutine
@@ -216,31 +234,35 @@ def test_process_exception_stops_application(event_loop, test_consumer):
         app.run_forever(loop=event_loop)
 
 
-@pytest.mark.parametrize('postprocess', (None, '', False, 10, sum))
-def test_result_postprocessor_not_coroutine_typeerror(postprocess):
+@pytest.mark.parametrize('postprocess, ASYNC_QUEUE', ((None, True), ('', True), (False, True), (10, True), (sum, True), (None, False), ('', False), (False, False), (10, False), (sum, False)))
+def test_result_postprocessor_not_coroutine_typeerror(postprocess, ASYNC_QUEUE):
     """Test TypeError is raised if postprocessor isn't a coroutine."""
-    app = Application('testing')
+    app = Application('testing',
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     with pytest.raises(TypeError):
         app.result_postprocessor(postprocess)
 
 
-@pytest.mark.parametrize('startup', (None, '', False, 10, sum))
-def test_startup_not_coroutine_typeerror(startup):
+@pytest.mark.parametrize('startup, ASYNC_QUEUE', ((None, True), ('', True), (False, True), (10, True), (sum, True), (None, False), ('', False), (False, False), (10, False), (sum, False)))
+def test_startup_not_coroutine_typeerror(startup, ASYNC_QUEUE):
     """Test TypeError is raised if startup isn't a coroutine."""
-    app = Application('testing')
+    app = Application('testing',
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     with pytest.raises(TypeError):
         app.startup(startup)
 
 
-@pytest.mark.parametrize('teardown', (None, '', False, 10, sum))
-def test_teardown_not_coroutine_typeerror(teardown):
+@pytest.mark.parametrize('teardown, ASYNC_QUEUE', ((None, True), ('', True), (False, True), (10, True), (sum, True), (None, False), ('', False), (False, False), (10, False), (sum, False)))
+def test_teardown_not_coroutine_typeerror(teardown, ASYNC_QUEUE):
     """Test TypeError is raised if teardown isn't a coroutine."""
-    app = Application('testing')
+    app = Application('testing',
+                      settings={'ASYNC_QUEUE': ASYNC_QUEUE})
     with pytest.raises(TypeError):
         app.teardown(teardown)
 
 
-def test_run_forever(event_loop, test_consumer_with_abort):
+@pytest.mark.parametrize('ASYNC_QUEUE', (True, False))
+def test_run_forever(event_loop, test_consumer_with_abort, ASYNC_QUEUE):
     """Test Application.run_forever."""
     startup_called = False
     preprocess_called = False
@@ -259,6 +281,7 @@ def test_run_forever(event_loop, test_consumer_with_abort):
         'testing',
         consumer=test_consumer_with_abort,
         callback=callback,
+        settings={"ASYNC_QUEUE": ASYNC_QUEUE}
     )
 
     @app.startup
