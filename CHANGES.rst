@@ -1,3 +1,12 @@
+Version 2.1.0
+-------------
+
+Released 2020-04-13
+
+- Adding a boolean setting `ASYNC_QUEUE` to support
+  using either Synchronous Queue (when False) 
+  or Async Queue(when true) [default]
+
 Version 2.0.0
 -------------
 
