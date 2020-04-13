@@ -20,8 +20,8 @@ def read(filename):
 
 setup(
     name='Henson',
-    version='2.0.0',
-    author='Leonard Bedner, Zack Morris, and others',
+    version='2.1.0',
+    author='Aditya Ghosh, Leonard Bedner, Zack Morris, and others',
     author_email='henson@iheart.com',
     url='https://henson.readthedocs.io',
     description='A framework for running a Python service driven by a consumer',
