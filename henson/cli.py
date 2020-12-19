@@ -5,7 +5,8 @@ from collections import Counter
 from copy import deepcopy
 from contextlib import suppress
 from functools import wraps
-from importlib import find_loader, import_module
+from importlib import import_module
+from importlib.util import find_spec
 import inspect
 import logging
 import os
@@ -279,7 +280,7 @@ def _import_application(application_path):
     # Then, try to find an import loader for the import_path
     # NOTE: this is to handle the case where a module is found but not
     # importable because of dependency import errors (Python 3 only)
-    if not find_loader(import_path):
+    if not find_spec(import_path):
         raise CommandError(
             'Unable to find an import loader for {}.'.format(import_path),
         )
