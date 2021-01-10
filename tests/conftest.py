@@ -29,8 +29,7 @@ class MockApplication(Application):
 class MockConsumer:
     """A stub consumer that can be used for testing."""
 
-    @asyncio.coroutine
-    def read(self):
+    async def read(self):
         """Return an item."""
         return 1
 
@@ -40,8 +39,7 @@ class MockAbortingConsumer:
 
     _run = False
 
-    @asyncio.coroutine
-    def read(self):
+    async def read(self):
         """Return an item."""
         if self._run:
             raise Abort('testing', {})
@@ -61,8 +59,7 @@ def cancelled_future(event_loop):
 @pytest.fixture
 def coroutine():
     """Return a coroutine function."""
-    @asyncio.coroutine
-    def _inner(*args, **kwargs):
+    async def _inner(*args, **kwargs):
         pass
     return _inner
 

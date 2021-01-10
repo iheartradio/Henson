@@ -72,8 +72,7 @@ def _exceeded_timeout(start_time, duration):
     return start_time + (duration * 1000) <= int(time.time())
 
 
-@asyncio.coroutine
-def _retry(app, message, exc):
+async def _retry(app, message, exc):
     """Retry the message.
 
     An exception that is included as a retryable type will result in the
@@ -119,12 +118,12 @@ def _retry(app, message, exc):
             backoff=app.settings['RETRY_BACKOFF'],
             number_of_retries=retry_info['count'],
         )
-        yield from asyncio.sleep(retry_info['delay'])
+        await asyncio.sleep(retry_info['delay'])
 
     # Update the retry information and retry the message.
     retry_info['count'] += 1
     message['_retry'] = retry_info
-    yield from app.settings['RETRY_CALLBACK'](app, message)
+    await app.settings['RETRY_CALLBACK'](app, message)
 
     # If the exception was retryable, none of the other callbacks should
     # execute.

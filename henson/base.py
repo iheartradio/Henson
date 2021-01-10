@@ -64,9 +64,11 @@ class Application:
         self.logger = logging.getLogger(self.name)
 
     def __str__(self):
+        """Return name of application."""
         return self.name
 
     def __repr__(self):
+        """Return representation of name of application."""
         return '<Application: {}>'.format(self)
 
     def error(self, callback):
@@ -187,10 +189,10 @@ class Application:
 
         # Start the application.
         tasks = [
-            asyncio.ensure_future(callback(self), loop=loop) for callback in
+            asyncio.ensure_future(callback(self)) for callback in
             self._callbacks['startup']
         ]
-        future = asyncio.gather(*tasks, loop=loop)
+        future = asyncio.gather(*tasks)
         loop.run_until_complete(future)
 
         # The following debug mode checks are intentionally separate.
@@ -218,7 +220,7 @@ class Application:
         # for each processing task.
 
         if self.settings['ASYNC_QUEUE']:
-            queue = asyncio.Queue(maxsize=num_workers, loop=loop)
+            queue = asyncio.Queue(maxsize=num_workers)
         else:
             queue = sync_queue.Queue()
 
@@ -232,11 +234,10 @@ class Application:
         tasks = [
             asyncio.ensure_future(
                 self._process(consumer, queue, loop),
-                loop=loop
             )
             for _ in range(num_workers)
         ]
-        future = asyncio.gather(*tasks, loop=loop)
+        future = asyncio.gather(*tasks)
 
         try:
             # Run the loop until the consumer says to stop or message
@@ -263,11 +264,11 @@ class Application:
 
             # Teardown
             tasks = [
-                asyncio.ensure_future(callback(self), loop=loop)
+                asyncio.ensure_future(callback(self))
                 for callback
                 in self._callbacks['teardown']
             ]
-            future = asyncio.gather(*tasks, loop=loop)
+            future = asyncio.gather(*tasks)
             loop.run_until_complete(future)
 
             # Clean up after ourselves.
@@ -313,8 +314,7 @@ class Application:
         self._register_callback(callback, 'teardown')
         return callback
 
-    @asyncio.coroutine
-    def _abort(self, exc):
+    async def _abort(self, exc):
         """Log the aborted message.
 
         Args:
@@ -328,8 +328,7 @@ class Application:
             'aborted_by': stack,
         })
 
-    @asyncio.coroutine
-    def _apply_callbacks(self, callbacks, value):
+    async def _apply_callbacks(self, callbacks, value):
         """Apply callbacks to a set of arguments.
 
         The callbacks will be called in the order in which they are
@@ -346,11 +345,10 @@ class Application:
 
         """
         for callback in callbacks:
-            value = yield from callback(self, value)
+            value = await callback(self, value)
         return value
 
-    @asyncio.coroutine
-    def _consume(self, queue):
+    async def _consume(self, queue):
         """Read in incoming messages.
 
         Messages will be read from the consumer until it raises an
@@ -364,18 +362,17 @@ class Application:
         while True:
             # Read messages and add them to the queue.
             try:
-                value = yield from self.consumer.read()
+                value = await self.consumer.read()
             except Abort:
                 self.logger.debug('consumer.aborted')
                 return
             else:
                 if self.settings["ASYNC_QUEUE"]:
-                    yield from queue.put(value)
+                    await queue.put(value)
                 else:
                     queue.put(value)
 
-    @asyncio.coroutine
-    def _process(self, future, queue, loop):
+    async def _process(self, future, queue, loop):
         """Process incoming messages.
 
         Args:
@@ -396,12 +393,12 @@ class Application:
                 if future.done():
                     break
 
-                yield from asyncio.sleep(
-                    self.settings['SLEEP_TIME'], loop=loop)
+                await asyncio.sleep(
+                    self.settings['SLEEP_TIME'])
                 continue
 
             if self.settings["ASYNC_QUEUE"]:
-                message = yield from queue.get()
+                message = await queue.get()
             else:
                 message = queue.get()
             # Save a copy of the original message in case its needed
@@ -409,13 +406,13 @@ class Application:
             original_message = deepcopy(message)
 
             try:
-                message = yield from self._apply_callbacks(
+                message = await self._apply_callbacks(
                     self._callbacks['message_preprocessor'], message)
                 self.logger.debug('message.preprocessed')
 
-                results = yield from self.callback(self, message)
+                results = await self.callback(self, message)
             except Abort as e:
-                yield from self._abort(e)
+                await self._abort(e)
             except Exception as e:
                 self.logger.error('message.failed', exc_info=sys.exc_info())
 
@@ -423,16 +420,16 @@ class Application:
                     # Any callback can prevent execution of further
                     # callbacks by raising Abort.
                     try:
-                        yield from callback(self, message, e)
+                        await callback(self, message, e)
                     except Abort:
                         break
             else:
-                yield from self._postprocess_results(results)
+                await self._postprocess_results(results)
             finally:
                 # Don't use _apply_callbacks here since we want to pass
                 # the original message into each callback.
                 for callback in self._callbacks['message_acknowledgement']:
-                    yield from callback(self, original_message)
+                    await callback(self, original_message)
                 self.logger.debug('message.acknowledged')
 
                 # If there are no new messages in the queue, _process
@@ -449,8 +446,7 @@ class Application:
                 del message
                 del original_message
 
-    @asyncio.coroutine
-    def _postprocess_results(self, results):
+    async def _postprocess_results(self, results):
         """Postprocess the results.
 
         Args:
@@ -462,11 +458,11 @@ class Application:
 
         for result in results:
             try:
-                yield from self._apply_callbacks(
+                await self._apply_callbacks(
                     self._callbacks['result_postprocessor'], result)
                 self.logger.debug('result.postprocessed')
             except Abort as e:
-                yield from self._abort(e)
+                await self._abort(e)
 
     def _register_callback(self, callback, callback_container):
         """Register a callback.
@@ -493,9 +489,9 @@ class Application:
     def _teardown(self, future, loop):
         """Tear down the application."""
         tasks = [
-            asyncio.ensure_future(callback(self), loop=loop) for callback in
+            asyncio.ensure_future(callback(self)) for callback in
             self._callbacks['teardown']]
-        future = asyncio.gather(*tasks, loop=loop)
+        future = asyncio.gather(*tasks)
         loop.run_until_complete(future)
 
 

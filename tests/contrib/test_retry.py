@@ -66,8 +66,7 @@ def test_callback_insertion(test_app, coroutine):
     """Test that the callback is properly registered."""
     # Add an error callback before registering Retry.
     @test_app.error
-    @asyncio.coroutine
-    def original_callback(*args):
+    async def original_callback(*args):
         pass
 
     # Register Retry.
@@ -78,14 +77,13 @@ def test_callback_insertion(test_app, coroutine):
 
 
 @pytest.mark.asyncio
-def test_callback_exceeds_threshold(test_app, coroutine):
+async def test_callback_exceeds_threshold(test_app, coroutine):
     """Test that callback doesn't run when the threshold is exceeded."""
     # Create a function that sets a flag indicating it's been called.
     original_callback_called = False
 
     @test_app.error
-    @asyncio.coroutine
-    def original_callback(*args):
+    async def original_callback(*args):
         nonlocal original_callback_called
         original_callback_called = True
 
@@ -93,20 +91,19 @@ def test_callback_exceeds_threshold(test_app, coroutine):
     test_app.settings['RETRY_THRESHOLD'] = 0
 
     for cb in test_app._callbacks['error']:
-        yield from cb(test_app, {}, retry.RetryableException())
+        await cb(test_app, {}, retry.RetryableException())
 
     assert original_callback_called
 
 
 @pytest.mark.asyncio
-def test_callback_exceeds_timeout(test_app, coroutine):
+async def test_callback_exceeds_timeout(test_app, coroutine):
     """Test that callback doesn't run when the timeout is exceeded."""
     # Create a function that sets a flag indicating it's been called.
     original_callback_called = False
 
     @test_app.error
-    @asyncio.coroutine
-    def original_callback(*args):
+    async def original_callback(*args):
         nonlocal original_callback_called
         original_callback_called = True
 
@@ -114,24 +111,24 @@ def test_callback_exceeds_timeout(test_app, coroutine):
     test_app.settings['RETRY_TIMEOUT'] = 0
 
     for cb in test_app._callbacks['error']:
-        yield from cb(test_app, {}, retry.RetryableException())
+        await cb(test_app, {}, retry.RetryableException())
 
     assert original_callback_called
 
 
 @pytest.mark.asyncio
-def test_callback_prevents_others(test_app, coroutine):
+async def test_callback_prevents_others(test_app, coroutine):
     """Test that the callback blocks other callbacks."""
     test_app.settings['RETRY_CALLBACK'] = coroutine
     retry.Retry(test_app)
 
     with pytest.raises(Abort):
         for cb in test_app._callbacks['error']:
-            yield from cb(test_app, {}, retry.RetryableException())
+            await cb(test_app, {}, retry.RetryableException())
 
 
 @pytest.mark.asyncio
-def test_delay(monkeypatch, test_app, coroutine):
+async def test_delay(monkeypatch, test_app, coroutine):
     """Test that retry delays."""
     sleep_called = False
 
@@ -139,14 +136,13 @@ def test_delay(monkeypatch, test_app, coroutine):
     test_app.settings['RETRY_DELAY'] = 1
     retry.Retry(test_app)
 
-    @asyncio.coroutine
-    def sleep(duration):
+    async def sleep(duration):
         nonlocal sleep_called
         sleep_called = True
 
     monkeypatch.setattr(asyncio, 'sleep', sleep)
 
     with suppress(Abort):
-        yield from retry._retry(test_app, {}, retry.RetryableException())
+        await retry._retry(test_app, {}, retry.RetryableException())
 
     assert sleep_called
