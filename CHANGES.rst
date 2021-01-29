@@ -1,3 +1,10 @@
+Version 2.2.0
+-------------
+
+Released 2021-01-29
+
+- Drop support for Python < 3.8, add support for Python >= 3.8
+
 Version 2.1.0
 -------------
 
