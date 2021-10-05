@@ -3,14 +3,20 @@ language: python
 matrix:
   include:
     - python: 3.8
+      dist: bionic
       env: TOX_ENV=py38
-    - python: 3.9
-      env: TOX_ENV=docs
-    - python: 3.9
-      env: TOX_ENV=pep8
     - python: 3.9
       dist: bionic
       env: TOX_ENV=py39
+    - python: 3.10.0
+      dist: bionic
+      env: TOX_ENV=docs
+    - python: 3.10.0
+      dist: bionic
+      env: TOX_ENV=pep8
+    - python: 3.10.0
+      dist: bionic
+      env: TOX_ENV=py310
 
 install: pip install tox
 script: tox -e $TOX_ENV

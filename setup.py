@@ -20,7 +20,7 @@ def read(filename):
 
 setup(
     name='Henson',
-    version='2.2.0',
+    version='2.3.0',
     author='Aditya Ghosh, Leonard Bedner, Zack Morris, and others',
     author_email='henson@iheart.com',
     url='https://henson.readthedocs.io',
@@ -60,6 +60,7 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
     ]
