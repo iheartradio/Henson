@@ -7,6 +7,8 @@ messages that fail to process.
 import asyncio
 import time
 
+import henson
+from henson.config import Config
 from henson.exceptions import Abort
 from henson.extensions import Extension
 
@@ -68,8 +70,7 @@ def _exceeded_timeout(start_time, duration):
         # Retry forever.
         return False
 
-    # Duration is in seconds, not milliseconds like start_time.
-    return start_time + (duration * 1000) <= int(time.time())
+    return (start_time + duration) <= int(time.time())
 
 
 async def _retry(app, message, exc):
@@ -94,28 +95,30 @@ async def _retry(app, message, exc):
         # next error callback can be called.
         return
 
+    settings = _get_settings(app, exc)
+
     retry_info = _retry_info(message)
 
-    threshold = app.settings['RETRY_THRESHOLD']
+    threshold = settings['RETRY_THRESHOLD']
     if _exceeded_threshold(retry_info['count'], threshold):
         # If we've exceeded the number of times to retry the message,
         # don't retry it again.
         return
 
-    timeout = app.settings['RETRY_TIMEOUT']
+    timeout = settings['RETRY_TIMEOUT']
     if _exceeded_timeout(retry_info['start_time'], timeout):
         # If we've gone past the time to stop retrying, don't retry it
         # again.
         return
 
-    if app.settings['RETRY_DELAY']:
+    if settings['RETRY_DELAY']:
         # If a delay has been specified, calculate the actual delay
         # based on any backoff and then sleep for that long. Add the
         # delay time to the retry information so that it can be used
         # to gain insight into the full history of a retried message.
         retry_info['delay'] = _calculate_delay(
-            delay=app.settings['RETRY_DELAY'],
-            backoff=app.settings['RETRY_BACKOFF'],
+            delay=settings['RETRY_DELAY'],
+            backoff=settings['RETRY_BACKOFF'],
             number_of_retries=retry_info['count'],
         )
         await asyncio.sleep(retry_info['delay'])
@@ -123,7 +126,7 @@ async def _retry(app, message, exc):
     # Update the retry information and retry the message.
     retry_info['count'] += 1
     message['_retry'] = retry_info
-    await app.settings['RETRY_CALLBACK'](app, message)
+    await settings['RETRY_CALLBACK'](app, message)
 
     # If the exception was retryable, none of the other callbacks should
     # execute.
@@ -146,6 +149,14 @@ def _retry_info(message):
     return info
 
 
+def _get_settings(app: henson.Application, exc: Exception) -> Config:
+    """Get either normal or override settings."""
+    for exc_key in tuple(app.settings['RETRY_OVERRIDES'].keys()):
+        if isinstance(exc, exc_key):
+            return app.settings['RETRY_OVERRIDES'][exc_key]
+    return app.settings
+
+
 class RetryableException(Exception):
     """Exception to be raised when a message should be retried."""
 
@@ -159,6 +170,7 @@ class Retry(Extension):
         'RETRY_EXCEPTIONS': RetryableException,
         'RETRY_THRESHOLD': None,
         'RETRY_TIMEOUT': None,
+        'RETRY_OVERRIDES': {},
     }
 
     REQUIRED_SETTINGS = (
@@ -179,16 +191,58 @@ class Retry(Extension):
         """
         super().init_app(app)
 
-        if app.settings['RETRY_DELAY'] < 0:
-            raise ValueError('The delay cannot be negative.')
+        self._validate_settings(app.settings)
 
-        if app.settings['RETRY_BACKOFF'] < 0:
-            raise ValueError('The backoff cannot be negative.')
-
-        if not asyncio.iscoroutinefunction(app.settings['RETRY_CALLBACK']):
-            raise TypeError('The retry callback is not a coroutine.')
+        # Merge overrides
+        self._merge_override_settings(app)
 
         # The retry callback should be executed before all other
         # callbacks. This will ensure that retryable exceptions are
         # retried.
         app._callbacks['error'].insert(0, _retry)
+
+    def _validate_settings(self, settings: Config) -> None:
+        """Validate the settings.
+
+        Raises:
+            TypeError: If the callback isn't a coroutine.
+            ValueError: If the delay or backoff is negative.
+
+        """
+        if settings['RETRY_DELAY'] < 0:
+            raise ValueError('The delay cannot be negative.')
+
+        if settings['RETRY_BACKOFF'] < 0:
+            raise ValueError('The backoff cannot be negative.')
+
+        if not asyncio.iscoroutinefunction(settings['RETRY_CALLBACK']):
+            raise TypeError('The retry callback is not a coroutine.')
+
+    def _merge_override_settings(self, app: henson.Application) -> None:
+        """Merge base settings with override settings.
+
+        Raises:
+            TypeError: If the callback isn't a coroutine.
+            ValueError: If the delay or backoff is negative.
+
+        """
+        override_settings = (
+            'RETRY_BACKOFF',
+            'RETRY_CALLBACK',
+            'RETRY_DELAY',
+            'RETRY_THRESHOLD',
+            'RETRY_TIMEOUT',
+        )
+        default_settings = {}
+
+        # Get the settings we want to merge with any override settings
+        for setting in override_settings:
+            default_settings[setting] = app.settings[setting]
+
+        for exc, override_settings in app.settings[
+            'RETRY_OVERRIDES'
+        ].items():
+            if issubclass(exc, (app.settings['RETRY_EXCEPTIONS'])):
+                merged_settings = {**default_settings, **override_settings}
+                self._validate_settings(merged_settings)
+                app.settings['RETRY_OVERRIDES'][exc] = merged_settings

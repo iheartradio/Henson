@@ -1,3 +1,10 @@
+Version 2.3.0
+-------------
+
+Released TBD
+
+- add support for settings overrides in the ``contrib`` package, ``retry``.
+
 Version 2.2.0
 -------------
 

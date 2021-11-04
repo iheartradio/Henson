@@ -20,9 +20,9 @@ Configuration
 =============
 
 Retry provides a couple of settings to control how many times a message will be
-retried. ``RETRY_THESHOLD`` and ``RETRY_TIMEOUT`` work in tandem. If values are
-specified for both, whichever limit is reached first will cause Henson to stop
-retrying the message. By default, Henson will try forever (yes, this is
+retried. ``RETRY_THRESHOLD`` and ``RETRY_TIMEOUT`` work in tandem. If values
+are specified for both, whichever limit is reached first will cause Henson to
+stop retrying the message. By default, Henson will try forever (yes, this is
 literally insane).
 
 +----------------------+------------------------------------------------------+
@@ -56,6 +56,39 @@ literally insane).
 |                      | can be retried. If set to None, the limit will be    |
 |                      | controlled by ``RETRY_THRESHOLD``. Defaults to None. |
 +----------------------+------------------------------------------------------+
+
+Retry Overrides
+---------------
+
+This is a setting you can make use of to override the global setings for all
+retried exceptions, and tailor settings specific to a particular excpetion
+you're retrying.
+
+For instance, you may want to retry an ``IOError`` exception forever (keeping
+with the insanity theme), however, with ``FileNotFoundError`` exceptions, you
+may only want to retry it twice using {``'RETRY_THRESHOLD': 2``}).
+
++----------------------+------------------------------------------------------+
+| ``RETRY_OVERRIDES``  | Dictionary of settings, with the key being a specific|
+|                      | exception, and the value being settings to override. |
+|                      | Exceptions not within the base ``RETRY_EXCEPTIONS``  |
+|                      | will be ignored.                                     |
++----------------------+------------------------------------------------------+
+
+An example::
+
+    {
+        'RETRY_BACKOFF': 1,
+        'RETRY_DELAY': 0,
+        'RETRY_EXCEPTIONS': (IOError, FileNotFoundError),
+        'RETRY_THRESHOLD': None,
+        'RETRY_TIMEOUT': None,
+        'RETRY_OVERRIDES': {
+            FileNotFoundError: {
+                'RETRY_THESHOLD': 2,
+            }
+        },
+    }
 
 Usage
 =====
