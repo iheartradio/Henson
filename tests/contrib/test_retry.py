@@ -3,11 +3,30 @@
 import asyncio
 from contextlib import suppress
 import time
+from typing import Coroutine, Sequence
 
 import pytest
 
+from henson import Application
 from henson.contrib import retry
 from henson.exceptions import Abort
+
+
+class TestRetryParentException(Exception):
+    # Avoid PytestCollection Warning
+    # https://github.com/pytest-dev/pytest/issues/6154#issuecomment-684769524
+    __test__ = False
+class TestRetryChildAException(TestRetryParentException):
+    pass
+class TestRetryChildBException(TestRetryParentException):
+    pass
+class TestRetryGrandchildException(TestRetryChildAException):
+    pass
+
+class TestRetryRedHerringException(Exception):
+    # Avoid PytestCollection Warning
+    # https://github.com/pytest-dev/pytest/issues/6154#issuecomment-684769524
+    __test__ = False
 
 
 @pytest.mark.parametrize('delay, backoff, count, expected', (
@@ -47,13 +66,13 @@ def test_exceeded_threshold(number_of_retries, threshold, expected):
 @pytest.mark.parametrize('offset, duration, expected', [
     # Retry forever.
     (0, None, False),  # now
-    (10000, None, False),  # 10 seconds ago
+    (10, None, False),  # 10 seconds ago
     # Don't retry.
     (0, 0, True),
-    (10000, 0, True),
+    (10, 0, True),
     # Retry.
-    (1000, 10, False),
-    (10000, 20, False),
+    (1, 10, False),
+    (10, 20, False),
 ])
 def test_exceeded_timeout(offset, duration, expected):
     """Test _exceeded_timeout."""
@@ -146,3 +165,78 @@ async def test_delay(monkeypatch, test_app, coroutine):
         await retry._retry(test_app, {}, retry.RetryableException())
 
     assert sleep_called
+
+
+@pytest.mark.parametrize('exception, backoff, callback, delay, threshold, timeout', (
+    (IOError, 1.05, 'coroutine', 0, None, None),
+    (FileNotFoundError, 1, 'coroutine', 0, None, 21600),
+    (Abort, 1, 'coroutine', 0, 2, None),
+    (retry.RetryableException, None, None, None, None, None),
+))
+@pytest.mark.asyncio
+async def test_merge_override_settings(
+    test_app, coroutine, exception, backoff, callback, delay, threshold, timeout, request
+):
+    """Test that overrides are working."""
+    test_app.settings['RETRY_CALLBACK'] = coroutine
+    test_app.settings['RETRY_EXCEPTIONS'] = (IOError, FileNotFoundError, Abort)
+    test_app.settings['RETRY_OVERRIDES'] = {
+        IOError : {
+            'RETRY_BACKOFF': 1.05,
+        },
+        FileNotFoundError: {
+            'RETRY_TIMEOUT': 21600, # 6 hours
+        },
+        Abort : {
+            'RETRY_THRESHOLD': 2,
+        },
+        retry.RetryableException: {},
+    }
+    retry.Retry(test_app)
+
+    # Check to see if the callback fixture exists, else, default to None
+    try:
+        callback_arg = request.getfixturevalue(callback)
+    except pytest.FixtureLookupError:
+        callback_arg = None
+
+    assert test_app.settings['RETRY_OVERRIDES'][exception].get('RETRY_BACKOFF', None) == backoff
+    assert test_app.settings['RETRY_OVERRIDES'][exception].get('RETRY_CALLBACK', None) == callback_arg
+    assert test_app.settings['RETRY_OVERRIDES'][exception].get('RETRY_DELAY', None) == delay
+    assert test_app.settings['RETRY_OVERRIDES'][exception].get('RETRY_THRESHOLD', None) == threshold
+    assert test_app.settings['RETRY_OVERRIDES'][exception].get('RETRY_TIMEOUT', None) == timeout
+
+@pytest.mark.parametrize('exc, expected, excs', (
+    (KeyError('test KeyError'), 1.1, (OSError, KeyError, Abort)),
+    (Abort('test', {}), 1.1, (OSError, Abort)),
+
+    # Confirm we can handle a single exception and not a tuple
+    (OSError('test OSError'), 1.05, OSError), 
+    
+    # Test that inheritance is working properly
+    (TestRetryChildAException(), 2.05, TestRetryParentException),
+    (TestRetryGrandchildException(), 2.05, TestRetryParentException),
+    (TestRetryChildBException(), 3.05, TestRetryParentException),
+    (TestRetryRedHerringException(), 1.1, TestRetryParentException)
+))
+@pytest.mark.asyncio
+async def test_get_settings(test_app: Application, coroutine: Coroutine, exc: Exception, excs, expected: bool):
+    """Test that _get_settings is grabbing the proper settings working."""
+    test_app.settings['RETRY_CALLBACK'] = coroutine
+    test_app.settings['RETRY_BACKOFF'] = 1.1
+    test_app.settings['RETRY_EXCEPTIONS'] = excs
+    test_app.settings['RETRY_OVERRIDES'] = {
+        OSError : {
+            'RETRY_BACKOFF': 1.05,
+        },
+        TestRetryChildAException: {
+            'RETRY_BACKOFF': 2.05,
+        },
+        TestRetryGrandchildException: {},
+        TestRetryChildBException: {
+            'RETRY_BACKOFF': 3.05,
+        },
+    }
+    retry.Retry(test_app)
+
+    assert retry._get_settings(test_app, exc)['RETRY_BACKOFF'] == expected
